@@ -1,0 +1,15 @@
+{
+  "name": "open-urban-airship",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "3.0.x",
+    "mongoose": "3.4.x",
+    "express-resource": "1.0.x",
+    "apn": "1.2.x",
+    "async": "0.1.x"
+  },
+  "engines": {
+    "node": "0.8.x",
+    "npm": "1.1.x"
+  }
+}
