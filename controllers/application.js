@@ -1,4 +1,5 @@
  var ApplicationModel = require("../models/application").ApplicationModel,
+ 	logger = require("../logger").logger,
  	fs = require('fs'),
 	path = require('path');
 
@@ -12,7 +13,7 @@ var createApplication = function (req, res) {
 
     req.on('end', function () {
         var obj = JSON.parse(output);
-        console.log(obj);
+        logger.debug(obj);
 
 		ApplicationModel.findOne({name: obj.name}, function(err, application) {
 			if (!err) {
@@ -27,14 +28,14 @@ var createApplication = function (req, res) {
 
 				if (obj.apple_push_certificate.startsWith(fileMoniker)) {
 					application.apple_push_certificate_filename = obj.apple_push_certificate.substring(fileMoniker.length, obj.apple_push_certificate.length);
-					console.log('using certificate %s', application.apple_push_certificate_filename);
+					logger.debug('using certificate %s', application.apple_push_certificate_filename);
 				} else {
 					application.apple_push_certificate = obj.apple_push_certificate;
 				}
 
 				if (obj.apple_push_key.startsWith(fileMoniker)) {
 					application.apple_push_key_filename = obj.apple_push_key.substring(fileMoniker.length, obj.apple_push_key.length);
-					console.log('using certificate %s', application.apple_push_key_filename);
+					logger.debug('using certificate %s', application.apple_push_key_filename);
 				} else {
 					application.apple_push_key = obj.apple_push_key;
 				}
@@ -45,11 +46,11 @@ var createApplication = function (req, res) {
 				application.access_key = obj.access_key;
 				application.save();
 		
-				console.log('saving application %s', obj.name);
+				logger.debug('saving application %s', obj.name);
 	
 				res.send('OK!');
 			} else {
-				console.error('Failed to register application %s', err);
+				logger.error('Failed to register application %s', err);
 				
 				res.statusCode = 500; 
 				res.send('FAILED!');
@@ -62,7 +63,7 @@ var listApplications = function (req, res) {
     var output = '';
     req.setEncoding('utf8');
 
-	console.log('listApplications');
+	logger.debug('listApplications');
 	
     req.on('data', function (chunk) {
         output += chunk;
@@ -101,7 +102,7 @@ var getByRequestAuth = function (req, extraData, cb, validateSecret) {
     var authorization = req.headers.authorization;
     extraData = extraData || {};
     
-    console.log('using authorization %s data %s', authorization, JSON.stringify(extraData));
+    logger.debug('using authorization %s data %s', authorization, JSON.stringify(extraData));
      
     if (!authorization) {
         secret_key = extraData.secret_key || req.query.secret_key;
@@ -116,7 +117,7 @@ var getByRequestAuth = function (req, extraData, cb, validateSecret) {
         authorization = "Basic " + new Buffer(authorizationString).toString('base64');
     }
     
-    console.log('using authorization %s', authorization);
+    logger.debug('using authorization %s', authorization);
     
     var basicMethod = 'Basic';
     if (authorization.startsWith(basicMethod)) {
@@ -127,16 +128,16 @@ var getByRequestAuth = function (req, extraData, cb, validateSecret) {
         var auth_access_key = parts[0];
         var auth_secret = parts[1];
 
-		console.log('looking for application %s', auth_access_key);
+		logger.debug('looking for application %s', auth_access_key);
         ApplicationModel.findOne({
             access_key: auth_access_key
         }, function (err, app) {
         	if (err) {
-        		console.error('failed to look for application %s', err);
+        		logger.error('failed to look for application %s', err);
         	}
 			else if (app) {
-				console.log('application found: %s (%s)', app, err);
-				console.log('%s, %s', app.secret_key_push, auth_secret);
+				logger.debug('application found: %s (%s)', app, err);
+				logger.debug('%s, %s', app.secret_key_push, auth_secret);
 				if (app !== null && validateSecret(app, auth_secret) === false) {
 					app = null;
 					err = new Error('Invalid application secret');
@@ -153,13 +154,13 @@ var getByRequestAuth = function (req, extraData, cb, validateSecret) {
 };
  
 var getByRequestAuthMaster = function (req, extraData, cb) {
- 	console.log('looking app by master secret');
+ 	logger.debug('looking app by master secret');
  	getByRequestAuth(req,
  		extraData,
  		cb,
  		function(app, secret) {
  			if (app.secret_key_push !== secret) {
- 				console.error('applcation master secret mismatch %s!==%s', app.secret_key_push, secret);
+ 				logger.error(util.format('applcation master secret mismatch %s!==%s', app.secret_key_push, secret));
  			}
  			
  			return app.secret_key_push === secret;
@@ -167,13 +168,13 @@ var getByRequestAuthMaster = function (req, extraData, cb) {
  };
  
  var getByRequestAuthApp = function (req, extraData, cb) {
- 	console.log('looking app by app secret');
+ 	logger.debug('looking app by app secret');
  	getByRequestAuth(req,
  		extraData,
  		cb,
  		function(app, secret) {
  			if (app.secret_key !== secret) {
- 				console.error('applcation secret mismatch %s!==%s', app.secret_key, secret);
+ 				logger.error(util.format('applcation secret mismatch %s!==%s', app.secret_key, secret));
  			}
 
  			return app.secret_key === secret;

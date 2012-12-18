@@ -1,0 +1,14 @@
+ var winston = require('winston');
+  
+ var logger = new (winston.Logger)({
+    transports: [
+      new (winston.transports.Console)()
+    ]
+  });
+  
+// This is needed as various places in the code use the debug level
+logger.setLevels(winston.config.syslog.levels);
+  
+module.exports = {
+	logger: logger
+};

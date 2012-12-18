@@ -1,5 +1,6 @@
 var application = require('./application'),
     DeviceModel = require("../models/device").DeviceModel,
+	logger = require("../logger").logger,
     apns = require('apn'),
  	fs = require('fs'),
 	path = require('path');
@@ -16,7 +17,7 @@ var createDevice = function (req, res) {
     	var obj = {}; 
 		if (output && output.length > 0) {
 			obj = JSON.parse(output);
-			console.log(obj);
+			logger.debug(obj);
 		}
 
 		application.getByRequestAuthApp(req, obj, function (err, app) {
@@ -44,16 +45,16 @@ var createDevice = function (req, res) {
 						
 						device.save(function(err) {
 							if (err) {
-								console.error("failed to save device %s", err);
+								logger.error(util.format("failed to save device %s", err));
 							}
 						});
 					} else {
-						console.error("failed to look for device %s", err);
+						logger.error(util.format("failed to look for device %s", err));
 					}
 				});				
 				res.send('OK!');
 			} else {
-				console.error('Failed to look for application %s', err);
+				logger.error(util.format('Failed to look for application %s', err));
 				res.statusCode = 400;
 				res.send('Application not found');
 			}
@@ -64,7 +65,7 @@ var createDevice = function (req, res) {
 var listDevices = function (req, res) {
     var output = '';
     req.setEncoding('utf8');
-	console.log('list devices');
+	logger.debug('list devices');
 	
     req.on('data', function (chunk) {
         output += chunk;
@@ -75,7 +76,7 @@ var listDevices = function (req, res) {
 		var obj = {}; 
 		if (output.length > 0) {
 			obj = JSON.parse(output);
-			console.log(obj);
+			logger.debug(obj);
 		}
 	
 		application.getByRequestAuthMaster(req, obj, function (err, app) {
@@ -112,7 +113,7 @@ var listDevices = function (req, res) {
 					res.send(list);				
 				});
 			} else {
-				console.error('Failed to look for application %s', err);
+				logger.error(util.format('Failed to look for application %s', err));
 				res.statusCode = 400;
 				res.send('Application not found');
 			}
@@ -131,7 +132,7 @@ var getByAliasesAndDeviceIds = function (application, aliases, deviceTokens, cb)
 	aliases = aliases || [];
 	deviceTokens = deviceTokens || [];
 	 
-    console.log("looking for devices by aliases %s and tokens", aliases, deviceTokens);
+    logger.debug(util.format("looking for devices by aliases %s and tokens", aliases, deviceTokens));
     DeviceModel.find({$or: [
         	{alias: {$in: aliases}},
         	{token: {$in: deviceTokens}}
@@ -139,7 +140,7 @@ var getByAliasesAndDeviceIds = function (application, aliases, deviceTokens, cb)
         _application: application._id
     }, function(err, devices) {
 		if (err) {
-			console.error('failed to find devices by alias %s', err);
+			logger.error(util.format('failed to find devices by alias %s', err));
 		}
 		
 		cb(err, devices);

@@ -2,24 +2,25 @@ var apns = require('apn'),
 	device = require('./device'),
 	application = require('./application'),
 	DeviceModel = require("../models/device").DeviceModel,
+	logger = require("../logger").logger,
  	fs = require('fs'),
 	path = require('path');	
 
 var	feedbacks = {};
 
 function onError(err, notification) {
-	console.error('Failed to send notification %s', err);
+	logger.error(util.format('Failed to send notification %s', err));
 }
 
 function onFeedback(application, time, buffer) {
-	console.info('got feedback on %s time %s %s', application.name, time, buffer);
+	logger.info(util.format('got feedback on %s time %s %s', application.name, time, buffer));
 	DeviceModel.find({token: buffer, _application: application._id}, function(err, devices) {
 		devices.forEach(function (device) {
-			console.log('device token %s is now inactive', device);
+			logger.debug(util.format('device token %s is now inactive', device));
 			device.status = 'inactive';
 			device.save(function (err) {
 				if (err !== null) {
-					console.error('failed to save %s: %s', buffer, err);
+					logger.error(util.format('failed to save %s: %s', buffer, err));
 				}
 			});
 		});
@@ -64,14 +65,14 @@ var push = function (req, res) {
     var output = '';
     req.setEncoding('utf8');
 
-	console.log('push notification');
+	logger.debug('push notification');
     req.on('data', function (chunk) {
         output += chunk;
     });
 
     req.on('end', function () {
 		var obj = JSON.parse(output);
-		console.log(obj);
+		logger.debug(obj);
     
 		application.getByRequestAuthMaster(req, obj, function (err, application) {
 			if (!err) {	
@@ -99,7 +100,7 @@ var push = function (req, res) {
 						
 						var feedback = new apns.Feedback(feedbackOptions);
 	
-						console.log('push devices: %s application: %s', devices, application);
+						logger.debug(util.format('push devices: %s application: %s', devices, application));
 						
 						feedbacks[application.name] = feedback;
 					}
@@ -124,7 +125,7 @@ var push = function (req, res) {
 						options.key = application.apple_push_key_filename;
 					}
 					
-					console.log('connection options %s', JSON.stringify(options));
+					logger.debug(util.format('connection options %s', JSON.stringify(options)));
 					
 					var apnsConnection = new apns.Connection(options);
 	
@@ -143,11 +144,11 @@ var push = function (req, res) {
 						}
 						
 						if (currentDevice.status !== 'active') {
-							console.log('device %s status %s', currentDevice.token, currentDevice.status);
+							logger.debug(util.format('device %s status %s', currentDevice.token, currentDevice.status));
 							continue;
 						}
 	
-						console.log('%s: sending push notification %s to %s', application.name, JSON.stringify(currentNote), currentNote.device);
+						logger.debug(util.format('%s: sending push notification %s to %s', application.name, JSON.stringify(currentNote), currentNote.device));
 						apnsConnection.sendNotification(currentNote);
 						
 						currentNote = null;
