@@ -2,15 +2,38 @@
   "name": "open-urban-airship",
   "version": "0.0.1",
   "dependencies": {
-    "express": "3.0.x",
-    "mongoose": "3.4.x",
-    "express-resource": "1.0.x",
-    "apn": "1.2.x",
-    "winston": "0.6.x",
-    "async": "0.1.x"
+    "express": "> 4.0.0",
+    "mongoose": "latest",
+    "express-resource": "latest",
+    "apn": "latest",
+    "node-gcm": "latest",
+    "winston": "latest",
+    "async": "latest",
+    "body-parser": "latest",
+    "passport-http": "latest",
+    "passport": "latest",
+    "morgan": "latest",
+    "errorHandler": "latest",
+    "base64url": "latest",
+    "config": "latest",
+    "js-yaml": "latest"
+  },
+  "devDependencies": {
+    "istanbul": "latest",
+    "jake": "latest",
+    "karma": "latest",
+    "karma-coverage": "latest",
+    "karma-mocha": "^0.1.9",
+    "launch": "latest",
+    "mocha": "latest",
+    "mocha-cobertura-reporter": "latest",
+    "rewire": "latest",
+    "should": "latest",
+    "sinon": "latest",
+    "supertest": "0.13.x"
   },
   "engines": {
-    "node": "0.8.x",
-    "npm": "1.1.x"
+    "node": "0.10.x",
+    "npm": "latest"
   }
 }

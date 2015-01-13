@@ -5,10 +5,11 @@
       new (winston.transports.Console)()
     ]
   });
-  
-// This is needed as various places in the code use the debug level
-logger.setLevels(winston.config.syslog.levels);
-  
-module.exports = {
-	logger: logger
-};
+
+
+logger.verbose = logger.verbose;
+logger.info = logger.info;
+logger.error = logger.error;
+logger.warn = logger.warn;
+
+module.exports = logger;

@@ -1,23 +1,23 @@
+/*jslint node: true */
+/*eslint-env node */
+"use strict";
+
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
-var ApplicationShcema = new Schema({
-    name: {
-        type: String,
-        unique: true
-    },
-    secret_key_push: String,
-    secret_key: String,
-    access_key: String,
+var ApplicationSchema = new Schema({
+    name: { type: String, required: true, unique: true },
+    secret_key_push: { type: String, required: true, unique: true },
+    secret_key: { type: String, required: true, unique: true },
+    access_key: { type: String, required: true, unique: true },
     development: Boolean,
-    apple_push_certificate: String,
-    apple_push_certificate_filename: String,
-    apple_push_key: String,
-    apple_push_key_filename: String
+    ios_certificate: {
+        push_certificate: String,
+        push_certificate_filename: String,
+
+        push_key: String,
+        push_key_filename: String
+    }
 });
 
-var ApplicationModel = mongoose.model('Application', ApplicationShcema);
-
-module.exports = {
-	ApplicationModel: ApplicationModel
-};
+module.exports = mongoose.model('Application', ApplicationSchema);

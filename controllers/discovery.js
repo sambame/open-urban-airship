@@ -1,3 +1,7 @@
+/*jslint node: true */
+/*eslint-env node */
+"use strict";
+
 var fs = require('fs'),
 	path = require('path');
 
