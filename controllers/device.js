@@ -8,10 +8,11 @@ var DeviceModel = require("../models/device"),
 
 /**
  *
- * @param application
- * @param token
- * @param alias
- * @param callback
+ * @param {ApplicationModel} application
+ * @param {string} platform
+ * @param {string} token
+ * @param {string} alias
+ * @param {function} callback
  */
 var createDevice = function(application, platform, token, alias, callback) {
 	DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
@@ -46,9 +47,28 @@ var createDevice = function(application, platform, token, alias, callback) {
 			callback(err, device);
 		});
 	});
-}
+};
 
+var getByAudience = function (application, audience, cb) {
+	DeviceModel.find(
+		{
+			$or: [
+				{alias: audience.alias},
+				{token: audience.device_token}
+			],
+			_application: application._id
+		},
+		function(err, devices) {
+			if (err) {
+				logger.error(util.format('failed to find devices by alias %s', err));
+			}
+
+			cb(err, devices);
+		}
+	);
+};
 
 module.exports = {
-	create: createDevice,
+	getByAudience: getByAudience,
+	create: createDevice
 };

@@ -7,6 +7,7 @@ var mongoose = require("mongoose"),
     sinon = require("sinon"),
     request = require("supertest"),
     Application = require("../controllers/application"),
+    Device = require("../controllers/device"),
     app = require("../app");
 
 describe("device", function() {
@@ -14,6 +15,7 @@ describe("device", function() {
         applicationKey = "applicationKey",
         applicationSecret = "applicationSecret",
         applicationMasterSecret = "applicationMasterSecret",
+        devicePlatform = "devicePlatform",
         deviceToken = "deviceToken";
 
     beforeEach(function (done) {
@@ -36,40 +38,28 @@ describe("device", function() {
         });
     });
 
-    it("registers new device", function(done) {
+    it("push notification to a device", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
             should.not.exists(err);
             should.exists(application);
 
-            request(app)
-                .put("/api/device_tokens/" + deviceToken)
-                .auth(applicationKey, applicationSecret)
-                .send({platform: 'test'})
-                .expect(200)
-                .end(function(err, res) {
-                    should.not.exists(err);
-                    should.exist(res);
+            Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                should.not.exists(err);
+                should.exists(device);
 
-                    done();
-                });
-        });
-    });
+                request(app)
+                    .post("/api/push/")
+                    .auth(applicationKey, applicationMasterSecret)
+                    .send({audience: {device_token: device.token}})
+                    .expect(200)
+                    .end(function (err, res) {
+                        should.not.exists(err);
+                        should.exist(res);
 
-    it("list devices", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
-            should.not.exists(err);
-            should.exists(application);
-
-            request(app)
-                .get("/api/device_tokens/")
-                .auth(applicationKey, applicationMasterSecret)
-                .expect(200)
-                .end(function(err, res) {
-                    should.not.exists(err);
-                    should.exist(res);
-
-                    done();
-                });
+                        done();
+                    }
+                );
+            });
         });
     });
 });

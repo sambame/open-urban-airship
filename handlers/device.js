@@ -31,7 +31,7 @@ var listDevices = function (req, res) {
         return res.status(401).end()
     }
 
-    getByApplication(app).lean().exec(function(err, devices) {
+    DeviceModel.find().lean().exec(function(err, devices) {
         var deviceTokens = [];
         var activeDevices = 0;
 
@@ -64,28 +64,6 @@ var listDevices = function (req, res) {
     });
 };
 
-
-var getByApplication = function (app, cb) {
-    return DeviceModel.find({
-        _application: app._id
-    });
-};
-
-var getByAudience = function (application, audience, cb) {
-    DeviceModel.find({$or: [
-        {alias: audience.alias},
-        {token: {$in: deviceTokens}}
-    ],
-        _application: application._id
-    }, function(err, devices) {
-        if (err) {
-            logger.error(util.format('failed to find devices by alias %s', err));
-        }
-
-        cb(err, devices);
-    });
-};
-
 var apis = function(req, res) {
     var filename = path.join(process.cwd(), "/static/discovery/devices-v1.json");
     var fileStream = fs.createReadStream(filename);
@@ -95,6 +73,5 @@ var apis = function(req, res) {
 module.exports = {
     put: createDevice,
     list: listDevices,
-    getByAudience: getByAudience,
     apis: apis
 };

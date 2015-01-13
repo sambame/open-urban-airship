@@ -9,7 +9,7 @@ var express = require('express'),
     BasicStrategy = require("passport-http").BasicStrategy,
     application = require('./handlers/application'),
     ApplicationModel = require("./models/application"),
-    push = require('./controllers/push'),
+    push = require('./handlers/push'),
     bodyParser = require("body-parser"),
     util = require("util"),
     logger = require("./logger"),
@@ -133,7 +133,7 @@ app.map({
         '/device_tokens/:token': {
             put: [authenticate(), device.put]
         },
-        '/device_tokens/?': {
+        '/device_tokens/': {
             get: [authenticate(), device.list]
         },
         '/push/': {

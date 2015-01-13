@@ -3,10 +3,10 @@
 "use strict";
 
 var apns = require("apn"),
-	device = require("./device"),
-	application = require("./application"),
-	DeviceModel = require("../models/device").DeviceModel,
-	logger = require("../logger").logger,
+	device = require("./../controllers/device"),
+	application = require("./../controllers/application"),
+	Device = require("../controllers/device"),
+	logger = require("../logger"),
  	fs = require("fs"),
 	util = require("util"),
 	path = require("path");	
@@ -112,7 +112,7 @@ function createFeedbackIfNeeded(application) {
 
 	var feedback = new apns.Feedback(feedbackOptions);
 
-	logger.debug(util.format("push devices: %s application: %s", devices, application));
+	logger.debug(util.format("push devices: %s application: %s", application));
 
 	feedbacks[application.name] = feedback;
 }
@@ -122,7 +122,11 @@ var push = function (req, res) {
 		return res.status(401).end()
 	}
 
-	device.getByAudience(application, req.body.audience, function (err, devices) {
+	if (!req.body.audience) {
+		return res.status(400).end()
+	}
+
+	Device.getByAudience(application, req.body.audience, function (err, devices) {
 		if (err || !devices) {
 			return res.send("No device found");
 		}
