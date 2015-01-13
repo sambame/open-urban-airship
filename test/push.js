@@ -50,7 +50,7 @@ describe("device", function() {
                 request(app)
                     .post("/api/push/")
                     .auth(applicationKey, applicationMasterSecret)
-                    .send({audience: {device_token: device.token}})
+                    .send({audience: {device_token: device.token}, notification: {alert: "test"}})
                     .expect(200)
                     .end(function (err, res) {
                         should.not.exists(err);

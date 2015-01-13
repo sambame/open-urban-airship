@@ -16,7 +16,8 @@
     "errorHandler": "latest",
     "base64url": "latest",
     "config": "latest",
-    "js-yaml": "latest"
+    "js-yaml": "latest",
+    "minioc": "latest"
   },
   "devDependencies": {
     "istanbul": "latest",
