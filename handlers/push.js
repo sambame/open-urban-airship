@@ -2,13 +2,10 @@
 /*eslint-env node */
 "use strict";
 
-var apns = require("apn"),
-	device = require("./../controllers/device"),
+var device = require("./../controllers/device"),
 	Push = require("./../controllers/push"),
 	Device = require("../controllers/device"),
-	logger = require("../logger"),
  	fs = require("fs"),
-	util = require("util"),
 	path = require("path");	
 
 
@@ -25,12 +22,17 @@ var push = function (req, res) {
 		return res.status(400).end()
 	}
 
-	Push.push(req.user.app, req.body.audience, req.body.notification, function(err) {
-		if (err) {
+	Push.push(req.user.app, req.body.audience, req.body.notification, function(err, devices) {
+ 		if (err) {
 			return res.status(500).end();
 		}
 
-		res.send("OK");
+		res.json({
+			"ok": true,
+			"push_ids": devices.map(function(device) {
+				return device.apid;
+			})
+		});
 	});
 };
 

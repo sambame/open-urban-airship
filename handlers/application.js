@@ -8,6 +8,7 @@ var ApplicationModel = require("../models/application"),
     crypto = require("crypto"),
     async = require("async"),
     base64url = require('base64url'),
+    Application = require('../controllers/application'),
     path = require('path');
 
 var createSecureRandom = function(callback) {
@@ -75,16 +76,11 @@ var listApplications = function (req, res) {
                 secret_key_push: app.secret_key_push,
                 secret_key: app.secret_key,
                 access_key: app.access_key,
-                development: app.development,
-                apple_push_certificate: app.apple_push_certificate,
-                apple_push_certificate_filename: app.apple_push_certificate_filename,
-                apple_push_key: app.apple_push_key,
-                apple_push_key_filename: app.apple_push_key_filename
+                development: app.development
             });
         });
 
-        res.contentType('json');
-        res.send({applications: apps});
+        res.json({applications: apps});
     });
 };
 
@@ -175,6 +171,39 @@ var getByRequestAuthApp = function (req, extraData, cb) {
         });
 };
 
+var configureIOS = function(req, res) {
+    if (!req.body.passphrase) {
+        return res.status(400).end();
+    }
+
+    if (!req.files.pfx) {
+        return res.status(400).end();
+    }
+
+    async.waterfall(
+        [
+            function(callback) {
+                fs.readFile(req.files.pfx.path, callback);
+            },
+            function(data, callback) {
+                Application.configureIOS(req.user.app, data, req.body.passphrase, function(err) {
+                    callback(err);
+                });
+            },
+            function(callback) {
+                fs.unlink(req.files.pfx.path, callback);
+            }
+        ],
+        function(err) {
+            if (err) {
+                return res.status(500);
+            }
+
+            res.end();
+        }
+    );
+};
+
 var apis = function(req, res) {
     var filename = path.join(process.cwd(), "/static/discovery/applications-v1.json");
     var fileStream = fs.createReadStream(filename);
@@ -186,6 +215,7 @@ module.exports = {
     getByRequestAuthMaster:  getByRequestAuthMaster,
     getByRequestAuthApp: getByRequestAuthApp,
     list: listApplications,
+    configureIOS: configureIOS,
     createAuthToken: createAuthToken,
     apis: apis
 };

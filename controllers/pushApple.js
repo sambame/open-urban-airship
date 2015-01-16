@@ -2,6 +2,7 @@
 /*eslint-env node */
 "use strict";
 var logger = require("../logger"),
+    util = require("util"),
     apn = require("apn");
 
 var	feedbacks = {};
@@ -30,7 +31,7 @@ function createFeedbackIfNeeded(application) {
         interval: 3600
     };
 
-    var feedback = new apns.Feedback(feedbackOptions);
+    var feedback = new apn.Feedback(feedbackOptions);
 
     logger.debug(util.format("push devices: %s application: %s", application));
 
@@ -52,35 +53,70 @@ function onFeedback(application, time, buffer) {
     });
 }
 
-function buildNotification(obj, device) {
+/**
+ *
+ * @param {object} notification
+ * @param {DeviceModel} device
+ * @returns {Notification}
+ */
+function buildNotification(notification) {
     function isReservedProperty(propertyName) {
         var properties = {
-            aliases: 1,
-            aps: 1,
+            android: 1,
+            ios: 1,
+            amazon: 1,
+            blackberry: 1,
+            mpns: 1,
+            wns: 1,
+
+            badge: 1,
+            alert: 1,
+            sound: 1,
+            "content-available": 1,
+            extra: 1,
             expiry: 1,
-            device_tokens: 1,
-            access_key: 1,
-            secret_key: 1
+            priority: 1
         };
 
         return propertyName in properties;
     }
 
-    var note = new apns.Notification();
-    note.device = device;
+    var note = new apn.Notification();
 
-    if (obj.expiry !== undefined) {
-        note.expiry = Math.floor(Date.now() / 1000 + obj.expiry);
-    }
-    note.sound = obj.aps.sound;
-    note.alert = obj.aps.alert;
-
-    for (var propertyName in obj) {
-        if (isReservedProperty(propertyName)) {
+    for (var key in notification) {
+        if (!notification.hasOwnProperty(key)) {
             continue;
         }
 
-        note.payload[propertyName] = obj[propertyName];
+        if (isReservedProperty(key)) {
+            continue;
+        }
+
+        note[key] = notification[key];
+    }
+
+    var ios = notification.ios || {};
+
+    for (var key in ios) {
+        if (!ios.hasOwnProperty(key)) {
+            continue;
+        }
+
+        if (isReservedProperty(key)) {
+            continue;
+        }
+
+        note[key] = ios[key];
+    }
+
+    var extra = notification.extra || {};
+
+    for (var extraKey in extra) {
+        if (!extra.hasOwnProperty(extraKey)) {
+            continue;
+        }
+
+        note.payload[extraKey] = extra[extraKey];
     }
 
     return note;
@@ -110,6 +146,12 @@ function getOptions(application) {
     return options;
 }
 
+/**
+ *
+ * @param {ApplicationModel} application
+ * @param {DeviceModel} device
+ * @param {object} notification
+ */
 var pushAppleNotification = function(application, device, notification) {
     createFeedbackIfNeeded(application);
 

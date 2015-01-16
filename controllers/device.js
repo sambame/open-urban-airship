@@ -27,14 +27,6 @@ var createDevice = function(application, platform, token, alias, callback) {
 			device._application = application._id;
 		}
 
-		if (platform === "ios") {
-			try {
-				new apns.Device(deviceToken);
-			} catch (Error) {
-				return callback(new Error("invalid device token"));
-			}
-		}
-
 		device.platform = platform;
 		device.alias = alias;
 		device.status = 'active';
@@ -49,7 +41,13 @@ var createDevice = function(application, platform, token, alias, callback) {
 	});
 };
 
-var getByAudience = function (application, audience, cb) {
+/**
+ *
+ * @param {ApplicationModel} application
+ * @param {object} audience
+ * @param {function} callback
+ */
+var getByAudience = function (application, audience, callback) {
 	DeviceModel.find(
 		{
 			$or: [
@@ -63,7 +61,7 @@ var getByAudience = function (application, audience, cb) {
 				logger.error(util.format('failed to find devices by alias %s', err));
 			}
 
-			cb(err, devices);
+			callback(err, devices);
 		}
 	);
 };

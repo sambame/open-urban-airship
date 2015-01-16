@@ -2,6 +2,8 @@
 /*eslint-env node */
 "use strict";
 var minioc = require("minioc"),
+    logger = require("../logger"),
+    util = require("util"),
     Device = require("./device");
 
 var push = function(application, audience, notification, callback) {
@@ -10,7 +12,7 @@ var push = function(application, audience, notification, callback) {
             return callback(err);
         }
 
-        for (var i in devices.length) {
+        for (var i=0;i<devices.length;i++) {
             var currentDevice = devices[i];
 
             if (currentDevice.status !== "active") {
@@ -18,17 +20,17 @@ var push = function(application, audience, notification, callback) {
                 continue;
             }
 
-            minioc.get("push-" + currentDevice.platform).push();
+            minioc.get("push-" + currentDevice.platform).push(application, currentDevice, notification);
 
-            logger.debug(util.format("%s: sending push notification %s to %s", application.name, JSON.stringify(currentNote), currentNote.device));
+            logger.debug(util.format("%s: sending push notification %s to %s", application.name, JSON.stringify(notification), devices[i].apid));
         }
 
-        callback();
+        callback(null, devices);
     });
 };
 
 minioc.register("push-ios").as.singleton.factory(function() {
-    return require("./push-ios").push;
+    return require("./pushApple");
 });
 
 module.exports = {

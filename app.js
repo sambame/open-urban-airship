@@ -14,6 +14,7 @@ var express = require('express'),
     util = require("util"),
     logger = require("./logger"),
     morgan = require("morgan"),
+    multer  = require('multer'),
     generalConfig = require("config").general,
     errorHandler = require("errorhandler"),
     passport = require("passport");
@@ -119,6 +120,7 @@ function authenticate() {
 
 app.use(passport.initialize());
 app.use(bodyParser.json());
+app.use(multer({ dest: './uploads/'}))
 
 if (process.env.NODE_ENV !== "test") {
     app.use(morgan("dev"));
@@ -129,6 +131,11 @@ app.map({
         '/application/?': {
             put: application.create,
             get: [authenticate(), application.list]
+        },
+        '/application/services': {
+            '/ios': {
+                put: [authenticate(), application.configureIOS]
+            }
         },
         '/device_tokens/:token': {
             put: [authenticate(), device.put]

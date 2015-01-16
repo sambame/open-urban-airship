@@ -11,12 +11,9 @@ var ApplicationSchema = new Schema({
     secret_key: { type: String, required: true, unique: true },
     access_key: { type: String, required: true, unique: true },
     development: Boolean,
-    ios_certificate: {
-        push_certificate: String,
-        push_certificate_filename: String,
-
-        push_key: String,
-        push_key_filename: String
+    ios: {
+        pfxData: Buffer,
+        passphrase: String
     }
 });
 

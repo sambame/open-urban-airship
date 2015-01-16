@@ -13,11 +13,13 @@
     "passport-http": "latest",
     "passport": "latest",
     "morgan": "latest",
+    "multer": "latest",
     "errorHandler": "latest",
     "base64url": "latest",
     "config": "latest",
     "js-yaml": "latest",
-    "minioc": "latest"
+    "minioc": "latest",
+    "node-uuid": "latest"
   },
   "devDependencies": {
     "istanbul": "latest",

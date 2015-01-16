@@ -49,7 +49,20 @@ var createApplication = function(name, development, access_key, secret_key_push,
 	});
 };
 
+/**
+ *
+ * @param {ApplicationModel} application
+ * @param {Buffer} pfxdata
+ * @param {string} passphrase
+ * @param {function} callback
+ */
+var configureIOS = function(application, pfxData, passphrase, callback) {
+	application.ios = {pfxData: pfxData, passphrase: passphrase};
+	application.save(callback);
+};
+
 module.exports = {
 	createAuthToken: createAuthToken,
-	create: createApplication
+	create: createApplication,
+	configureIOS: configureIOS
 };

@@ -6,9 +6,10 @@ var mongoose = require("mongoose"),
     should = require("should"),
     sinon = require("sinon"),
     request = require("supertest"),
-    Application = require("../controllers/application"),
-    Device = require("../controllers/device"),
-    app = require("../app");
+    Application = require("../../controllers/application"),
+    Device = require("../../controllers/device"),
+    minioc = require("minioc"),
+    app = require("../../app");
 
 describe("device", function() {
     var applicationName = "applicationName",
@@ -39,6 +40,14 @@ describe("device", function() {
     });
 
     it("push notification to a device", function(done) {
+        var pushSpy = this.sinon.spy();
+
+        minioc.register("push-" + devicePlatform).as.value(
+            {
+                push: pushSpy
+            }
+        );
+
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
             should.not.exists(err);
             should.exists(application);
@@ -55,6 +64,7 @@ describe("device", function() {
                     .end(function (err, res) {
                         should.not.exists(err);
                         should.exist(res);
+                        pushSpy.called.should.be.true;
 
                         done();
                     }
