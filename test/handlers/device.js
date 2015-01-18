@@ -37,39 +37,47 @@ describe("device", function() {
     });
 
     it("registers new device", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
-            should.not.exists(err);
-            should.exists(application);
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.save();
+            })
+            .then(function() {
+                request(app)
+                    .put("/api/device_tokens/" + deviceToken)
+                    .auth(applicationKey, applicationSecret)
+                    .send({platform: 'test'})
+                    .expect(200)
+                    .end(function(err, res) {
+                        should.not.exists(err);
+                        should.exist(res);
 
-            request(app)
-                .put("/api/device_tokens/" + deviceToken)
-                .auth(applicationKey, applicationSecret)
-                .send({platform: 'test'})
-                .expect(200)
-                .end(function(err, res) {
-                    should.not.exists(err);
-                    should.exist(res);
-
-                    done();
-                });
-        });
+                        done();
+                    });
+            })
+            .catch(function(err) {
+                should.not.exists(err);
+            });
     });
 
     it("list devices", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
-            should.not.exists(err);
-            should.exists(application);
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.save();
+            })
+            .then(function() {
+                request(app)
+                    .get("/api/device_tokens/")
+                    .auth(applicationKey, applicationMasterSecret)
+                    .expect(200)
+                    .end(function(err, res) {
+                        should.not.exists(err);
+                        should.exist(res);
 
-            request(app)
-                .get("/api/device_tokens/")
-                .auth(applicationKey, applicationMasterSecret)
-                .expect(200)
-                .end(function(err, res) {
-                    should.not.exists(err);
-                    should.exist(res);
-
-                    done();
-                });
-        });
+                        done();
+                    });
+            })
+            .catch(function(err) {
+                should.not.exists(err);
+            });
     });
 });

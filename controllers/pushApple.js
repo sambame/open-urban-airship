@@ -11,46 +11,67 @@ function onError(err, notification) {
     logger.error(util.format("Failed to send notification %s", err));
 }
 
+function getEndpoint(production) {
+    return production ? "gateway.push.apple.com" : "gateway.sandbox.push.apple.com";
+}
+
+function getOptions(application) {
+    return {
+        pfx: application.ios.pfxData,
+        passphrase: application.ios.passphrase,
+        gateway: getEndpoint(application.production),
+        port: 2195,
+        enhanced: true,
+        errorCallback: onError
+    };
+}
+
 function createFeedbackIfNeeded(application) {
     if (feedbacks[application.name]) {
         return;
     }
 
     var feedbackOptions = {
-        cert: application.apple_push_certificate_filename,
-        certData: application.apple_push_certificate,
-        key:  application.apple_push_key_filename,
-        keyData: application.apple_push_key,
-        passphrase: application.passphrase,
-        ca: application.ca,
-        address: application.development ? "feedback.sandbox.push.apple.com" : "feedback.push.apple.com",
+        pfx: application.ios.pfxData,
+        passphrase: application.ios.passphrase,
+        gateway: getEndpoint(application.production),
         port: 2196,
-        feedback: function(time, buffer) {
-            onFeedback(application, time, buffer);
-        },
+        batchFeedback: application.production,
         interval: 3600
     };
 
     var feedback = new apn.Feedback(feedbackOptions);
 
-    logger.debug(util.format("push devices: %s application: %s", application));
+    if (application.production) {
+        feedback.on("feedback", function (devices) {
+            logger.info(util.format("got feedback on %s time %s %s", application.name, devices));
 
-    feedbacks[application.name] = feedback;
-}
-
-function onFeedback(application, time, buffer) {
-    logger.info(util.format("got feedback on %s time %s %s", application.name, time, buffer));
-    DeviceModel.find({token: buffer, _application: application._id}, function(err, devices) {
-        devices.forEach(function (device) {
-            logger.debug(util.format("device token %s is now inactive", device));
-            device.status = "inactive";
-            device.save(function (err) {
-                if (err !== null) {
-                    logger.error(util.format("failed to save %s: %s", buffer, err));
-                }
+            devices.forEach(function (item) {
+                // Do something with item.device and item.time;
             });
         });
-    });
+    } else {
+        feedback.on("feedback", function (device, time) {
+            logger.info(util.format("got feedback on %s time %s %s %s", application.name, device, time));
+
+            Device.find({token: buffer}, function(err, devices) {
+                devices.forEach(function (device) {
+                    logger.debug(util.format("device token %s is now inactive", device));
+                    device.status = "inactive";
+                    device.save(function (err) {
+                        if (err !== null) {
+                            logger.error(util.format("failed to save %s: %s", buffer, err));
+                        }
+                    });
+                });
+            });
+        });
+    }
+
+    logger.debug(util.format("push devices: %s application: %s", application));
+
+
+    feedbacks[application.name] = feedback;
 }
 
 /**
@@ -67,15 +88,7 @@ function buildNotification(notification) {
             amazon: 1,
             blackberry: 1,
             mpns: 1,
-            wns: 1,
-
-            badge: 1,
-            alert: 1,
-            sound: 1,
-            "content-available": 1,
-            extra: 1,
-            expiry: 1,
-            priority: 1
+            wns: 1
         };
 
         return propertyName in properties;
@@ -119,31 +132,17 @@ function buildNotification(notification) {
         note.payload[extraKey] = extra[extraKey];
     }
 
+    var iosExtra = ios.extra || {};
+
+    for (var iosExtraKey in iosExtra) {
+        if (!iosExtra.hasOwnProperty(iosExtraKey)) {
+            continue;
+        }
+
+        note.payload[extraKey] = iosExtra[iosExtraKey];
+    }
+
     return note;
-}
-
-function getOptions(application) {
-    var options = {
-        passphrase: application.passphrase,
-        gateway: application.development ? "gateway.sandbox.push.apple.com" : "gateway.push.apple.com",
-        port: 2195,
-        enhanced: true,
-        errorCallback: onError
-    };
-
-    if (application.apple_push_certificate !== undefined && application.apple_push_certificate.length > 0) {
-        options.certData = application.apple_push_certificate;
-    } else {
-        options.cert = application.apple_push_certificate_filename;
-    }
-
-    if (application.apple_push_key !== undefined && application.apple_push_key.length > 0) {
-        options.keyData = application.apple_push_key;
-    } else {
-        options.key = application.apple_push_key_filename;
-    }
-
-    return options;
 }
 
 /**

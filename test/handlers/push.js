@@ -16,7 +16,7 @@ describe("device", function() {
         applicationKey = "applicationKey",
         applicationSecret = "applicationSecret",
         applicationMasterSecret = "applicationMasterSecret",
-        devicePlatform = "devicePlatform",
+        devicePlatform = "test",
         deviceToken = "deviceToken";
 
     beforeEach(function (done) {
@@ -48,28 +48,32 @@ describe("device", function() {
             }
         );
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
-            should.not.exists(err);
-            should.exists(application);
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.saveQ();
+            })
+            .then(function(application) {
+                Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                    should.not.exists(err);
+                    should.exists(device);
 
-            Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                    request(app)
+                        .post("/api/push/")
+                        .auth(applicationKey, applicationMasterSecret)
+                        .send({audience: {device_token: device.token}, notification: {alert: "test"}})
+                        .expect(200)
+                        .end(function (err, res) {
+                            should.not.exists(err);
+                            should.exist(res);
+                            pushSpy.called.should.be.true;
+
+                            done();
+                        }
+                    );
+                });
+            })
+            .catch(function() {
                 should.not.exists(err);
-                should.exists(device);
-
-                request(app)
-                    .post("/api/push/")
-                    .auth(applicationKey, applicationMasterSecret)
-                    .send({audience: {device_token: device.token}, notification: {alert: "test"}})
-                    .expect(200)
-                    .end(function (err, res) {
-                        should.not.exists(err);
-                        should.exist(res);
-                        pushSpy.called.should.be.true;
-
-                        done();
-                    }
-                );
             });
-        });
     });
 });

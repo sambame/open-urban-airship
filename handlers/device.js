@@ -5,9 +5,7 @@
 var DeviceModel = require("../models/device"),
     Device = require("../controllers/device"),
     logger = require("../logger"),
-    util = require("util"),
-    fs = require('fs'),
-    path = require('path');
+    util = require("util");
 
 var createDevice = function (req, res) {
     if (!req.params.token) {
@@ -16,13 +14,16 @@ var createDevice = function (req, res) {
 
     var deviceToken = req.params.token.toLowerCase();
 
-    Device.create(req.user.app, req.body.platform, deviceToken, req.body.alias, function(err) {
+    Device.create(req.user.app, req.body.platform, deviceToken, req.body.alias, function(err, device) {
         if (err) {
             logger.error(util.format("failed to look for device %s", err));
-            return res.status(500).end();
+            return res.status(500).json({ok: false});
         }
 
-        res.end();
+        res.json({
+            ok: true,
+            apid: device.apid
+        });
     });
 };
 
@@ -64,14 +65,7 @@ var listDevices = function (req, res) {
     });
 };
 
-var apis = function(req, res) {
-    var filename = path.join(process.cwd(), "/static/discovery/devices-v1.json");
-    var fileStream = fs.createReadStream(filename);
-    fileStream.pipe(res);
-};
-
 module.exports = {
     put: createDevice,
-    list: listDevices,
-    apis: apis
+    list: listDevices
 };

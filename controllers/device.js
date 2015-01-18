@@ -3,8 +3,7 @@
 "use strict";
 var DeviceModel = require("../models/device"),
 	logger = require("../logger"),
-	util = require("util"),
-	apns = require('apn');
+	util = require("util");
 
 /**
  *
@@ -29,9 +28,9 @@ var createDevice = function(application, platform, token, alias, callback) {
 
 		device.platform = platform;
 		device.alias = alias;
-		device.status = 'active';
+		device.status = "active";
 
-		device.save(function (err) {
+		device.save(function (err, device) {
 			if (err) {
 				logger.error(util.format("failed to save device %s", err));
 			}

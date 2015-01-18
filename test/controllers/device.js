@@ -15,7 +15,7 @@ describe("device", function() {
         applicationSecret = "applicationSecret",
         applicationMasterSecret = "applicationMasterSecret",
         deviceToken = "deviceToken",
-        devicePlatform = "devicePlatform";
+        devicePlatform = "test";
 
     beforeEach(function (done) {
         this.sinon = sinon.sandbox.create();
@@ -38,22 +38,22 @@ describe("device", function() {
     });
 
     it("getAudience", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
-            should.not.exists(err);
-            should.exists(application);
-
-            Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
-                should.not.exists(err);
-                should.exists(device);
-
-                Device.getByAudience(application, {deviceToken: deviceToken}, function(err, device) {
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
                     should.not.exists(err);
                     should.exists(device);
 
-                    done();
-                });
-            });
-        });
-    });
+                    Device.getByAudience(application, {deviceToken: deviceToken}, function(err, device) {
+                        should.not.exists(err);
+                        should.exists(device);
 
+                        done();
+                    });
+                });
+            })
+            .catch(function(err) {
+                should.not.exists(err);
+            });
+    });
 });

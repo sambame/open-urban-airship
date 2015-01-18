@@ -40,7 +40,7 @@ describe("application", function() {
 
     it("registers new application", function(done) {
         request(app)
-            .put("/api/application/")
+            .post("/api/partner/companies/{companyId}/apps")
             .send({name: applicationName})
             .expect(200)
             .end(function (err, res) {
@@ -53,7 +53,7 @@ describe("application", function() {
 
     it("list application", function(done) {
         request(app)
-            .get("/api/application/")
+            .get("/api/partner/companies/{companyId}/apps")
             .auth(generalConfig.masterKey, generalConfig.masterSecret)
             .expect(200)
             .end(function (err, res) {
@@ -65,23 +65,27 @@ describe("application", function() {
     });
 
     it("attach ios data", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret, function(err, application) {
-            should.not.exists(err);
-            should.exists(application);
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.save();
+            })
+            .then(function() {
+                request(app)
+                    .put("/api/partner/companies/{companyId}/apps/services/ios")
+                    .auth(applicationKey, applicationSecret)
+                    .type('form')
+                    .field("passphrase", "passphrase")
+                    .attach("pfx", 'test/data/fake_pfx.not.p12')
+                    .expect(200)
+                    .end(function(err, res) {
+                        should.not.exists(err);
+                        should.exist(res);
 
-            request(app)
-                .put("/api/application/services/ios")
-                .auth(applicationKey, applicationSecret)
-                .type('form')
-                .field("passphrase", "passphrase")
-                .attach("pfx", 'test/data/fake_pfx.not.p12')
-                .expect(200)
-                .end(function(err, res) {
-                    should.not.exists(err);
-                    should.exist(res);
-
-                    done();
-                });
-        });
+                        done();
+                    });
+            })
+            .catch(function(err) {
+                should.not.exists(err);
+            });
     });
 });

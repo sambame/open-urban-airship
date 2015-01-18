@@ -1,0 +1,150 @@
+<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:apigee="http://api.apigee.com/wadl/2010/07/"
+             xmlns="http://wadl.dev.java.net/2009/02"
+             xsi:schemaLocation="http://wadl.dev.java.net/2009/02
+                 http://apigee.com/schemas/wadl-schema.xsd
+                 http://api.apigee.com/wadl/2010/07/
+                 http://apigee.com/schemas/apigee-wadl-extensions.xsd">
+    <resources base="https://openurban.samba.me/api/">
+        <resource path="device_tokens/{deviceToken}">
+            <param name="deviceToken" required="true" style="template" type="xsd:string">
+                <doc>Device Token</doc>
+            </param>
+
+            <method id="registerToken" name="PUT" apigee:displayName="Device Token Registration">
+                <apigee:tags>
+                    <apigee:tag primary="true">device</apigee:tag>
+                </apigee:tags>
+
+                <apigee:authentication required="true"/>
+
+                <doc>Register the device token with this application. This will mark the device token as active in our system. Optionally set metadata.</doc>
+                <request>
+                    <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
+                        <doc>Content type.</doc>
+                    </param>
+                    <representation mediaType="application/json">
+                        <apigee:payload required="true">
+                            <apigee:content>
+                                <![CDATA[
+                                {
+                                    platform: "device platform (ios, android)"
+                                    "alias": "your_user_id"
+                                }
+                                ]]>
+                            </apigee:content>
+                        </apigee:payload>
+                    </representation>
+                </request>                
+            </method>            
+        </resource>
+
+        <resource path="device_tokens">
+            <method id="listDevices" name="GET" apigee:displayName="Device listing">
+                <apigee:tags>
+                    <apigee:tag primary="true">device</apigee:tag>
+                </apigee:tags>
+
+                <apigee:authentication required="true"/>
+
+                <doc>Fetch device tokens registered to this application, along with associated metadata.</doc>
+            </method>            
+        </resource>
+
+        <resource path="push/">
+            <method id="push" name="POST" apigee:displayName="Send Push">
+                <apigee:tags>
+                    <apigee:tag primary="true">push</apigee:tag>
+                </apigee:tags>
+
+                <apigee:authentication required="true"/>
+
+                <doc>Send a push notification to a specified device or list of devices.</doc>
+                <request>
+                    <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
+                        <doc>Content type.</doc>
+                    </param>
+                    <representation mediaType="application/json">
+                        <apigee:payload required="true">
+                            <apigee:content>
+                                <![CDATA[
+                                {
+                                    "audience" : {
+                                        "ios_channel" : "9c36e8c7-5a73-47c0-9716-99fd3d4197d5"
+                                    },
+                                    "notification" : {
+                                        "alert" : "Hello!"
+                                    },
+                                    "device_types" : "all"
+                                }
+                                ]]>
+                            </apigee:content>
+                        </apigee:payload>
+                    </representation>
+                </request>                
+            </method>
+        </resource>
+
+        <resource path="partner/companies/{companyId}/apps">
+            <param name="companyId" required="true" style="template" type="xsd:string">
+                <doc>Represents the unique id of the company</doc>
+            </param>            
+
+            <method id="listApplications" name="GET" apigee:displayName="List Applications">
+                <apigee:tags>
+                    <apigee:tag primary="true">Partner</apigee:tag>
+                </apigee:tags>
+                
+                <apigee:authentication required="true"/>
+                
+                <doc>
+                    Return a list of applications you’ve created:
+                    [
+                       {
+                          "name": "com.foo.bar",
+                          "key": "XYZ123...",
+                          "secret": "F89X12...",
+                          "master_secret": "AbC232...",
+                          "push_service_status": "development",
+                          "push_status": "none",
+                          "android_package_name": "",
+                          "c2dm_auth_token": "",
+                          "gcm_api_key": ""
+                       },
+                       { "..." }
+                    ]
+                </doc>
+            </method>
+
+            <method id="createApplication" name="POST" apigee:displayName="Create Application">
+                <apigee:tags>
+                    <apigee:tag primary="true">Partner</apigee:tag>
+                </apigee:tags>                
+
+                <doc>Create a new app.</doc>
+                <request>
+                    <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
+                        <doc>Content type.</doc>
+                    </param>
+                    <representation mediaType="application/json">
+                        <apigee:payload required="true">
+                            <apigee:content>
+                                <![CDATA[
+                                {
+                                    "name": "A Partner App",
+                                    "production": false,
+                                    "android_package_name": "com.packagename",
+                                    "gcm_api_key": "some.gcm.key",
+                                    "ios_certificate": "<base64 encoded string of the .p12 with the private key>",
+                                    "ios_certificate_password": "<optional password, if the .p12 was exported with one>"
+                                }
+                                ]]>
+                            </apigee:content>
+                        </apigee:payload>
+                    </representation>
+                </request>
+            </method>
+        </resource>
+    </resources>
+</application>

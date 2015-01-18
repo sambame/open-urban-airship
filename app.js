@@ -4,7 +4,6 @@
 
 var express = require('express'),
     mongoose = require('mongoose'),
-    discovery = require('./controllers/discovery'),
     device = require('./handlers/device'),
     BasicStrategy = require("passport-http").BasicStrategy,
     application = require('./handlers/application'),
@@ -62,20 +61,20 @@ if (typeof String.prototype.startsWith != 'function') {
 }
 
 passport.use(new BasicStrategy(
-    function(auth_access_key, auth_secret, done) {
-        logger.verbose(util.format("basic auth for: %s", auth_access_key));
+    function(key, secret, done) {
+        logger.verbose(util.format("basic auth for: %s", key));
 
-        if (!auth_access_key) {
+        if (!key) {
             logger.info(util.format("missing auth_access_key"));
             return done(null, false);
         }
 
-        if (!auth_secret) {
-            logger.info(util.format("missing password for %s", auth_secret));
+        if (!secret) {
+            logger.info(util.format("missing password for %s", secret));
             return done(null, false);
         }
 
-        if (auth_secret === generalConfig.masterSecret && auth_access_key === generalConfig.masterKey) {
+        if (secret === generalConfig.masterSecret && key === generalConfig.masterKey) {
             return done(null, {});
         }
 
@@ -84,7 +83,7 @@ passport.use(new BasicStrategy(
         // indicate failure.  Otherwise, return the authenticated `user`.
         ApplicationModel.findOne(
             {
-                access_key: auth_access_key
+                key: key
             },
             function (err, app) {
                 if (err) {
@@ -96,16 +95,16 @@ passport.use(new BasicStrategy(
                 }
 
                 logger.debug('application found: %s (%s)', app, err);
-                logger.debug('%s, %s', app.secret_key_push, auth_secret);
+                logger.debug('%s, %s', app.master_secret, secret);
 
-                if (app.secret_key_push !== auth_secret && app.secret_key != auth_secret) {
+                if (app.master_secret !== secret && app.secret != secret) {
                     return done(null, false);
                 }
 
                 var userApp = {
                         app: app,
-                        masterAuth: app.secret_key_push === auth_secret,
-                        simpleAuth: app.secret_key === auth_secret
+                        masterAuth: app.master_secret === secret,
+                        simpleAuth: app.secret === secret
                     };
 
                 return done(null, userApp);
@@ -128,13 +127,17 @@ if (process.env.NODE_ENV !== "test") {
 
 app.map({
     '/api': {
-        '/application/?': {
-            put: application.create,
-            get: [authenticate(), application.list]
-        },
-        '/application/services': {
-            '/ios': {
-                put: [authenticate(), application.configureIOS]
+        '/partner': {
+            '/companies/:companyId': {
+                '/apps': {
+                    post: application.create,
+                    get: [authenticate(), application.list],
+                    '/services': {
+                        '/ios': {
+                            put: [authenticate(), application.configureIOS]
+                        }
+                    }
+                }
             }
         },
         '/device_tokens/:token': {
@@ -145,24 +148,6 @@ app.map({
         },
         '/push/': {
             post: [authenticate(), push.push]
-        },
-        '/discovery': {
-			get: discovery.get,
-			'/v1/apis': {
-				get: discovery.apis,
-				'/application/v1/rest': {
-					get: application.apis
-				},
-				'/device_token/v1/rest': {
-					get: device.apis
-				},
-				'/push/v1/rest': {
-					get: push.apis
-				}				
-			}
-		},
-		'/static/proxy.html': {
-			get: discovery.proxy
         }
     }
 });
@@ -182,8 +167,3 @@ if (app.get("env") === "development") {
     });
 }
 
-var port = process.env.PORT || 5000;
-
-app.listen(port, function () {
-    logger.info("Listening on " +  port);
-});

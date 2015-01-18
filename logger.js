@@ -1,4 +1,8 @@
- var winston = require('winston');
+/*jslint node: true */
+/*eslint-env node */
+"use strict";
+
+var winston = require('winston');
   
  var logger = new (winston.Logger)({
     transports: [

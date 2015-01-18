@@ -2,51 +2,33 @@
 /*eslint-env node */
 "use strict";
 var ApplicationModel = require("../models/application"),
-	logger = require("../logger");
-
-/**
- *
- * @param {string} key
- * @param {string} secret
- * @returns {string}
- */
-var createAuthToken = function(key, secret) {
-	return new Buffer(key + ":" + secret, "utf8").toString("base64");
-};
-
+	promisify = require("../promisify");
 
 /**
  *
  * @param {string} name
- * @param {boolean} development
- * @param {string} access_key
- * @param {string} secret_key_push
- * @param {string} secret_key
+ * @param {boolean} production
+ * @param {string} key
+ * @param {string} master_secret
+ * @param {string} secret
  * @param {function} callback
  */
-var createApplication = function(name, development, access_key, secret_key_push, secret_key, callback) {
-	ApplicationModel.findOne({name: name}, function(err, application) {
-		if (err) {
-			logger.error('Failed to register application %s', err);
+var createApplication = function(name, production, key, master_secret, secret, callback) {
+	var application = new ApplicationModel();
+	application.name = name;
 
-			return callback(err);
-		}
+	application.production = production;
+	application.master_secret = master_secret;
+	application.secret = secret;
+	application.key = key;
 
-		if (!application) {
-			application = new ApplicationModel();
-			application.name = name;
-		}
+	callback(null, application);
+};
 
-		application.development = development;
-		application.secret_key_push = secret_key_push;
-		application.secret_key = secret_key;
-		application.access_key = access_key;
+var createApplicationPromise = function(name, production, key, master_secret, secret) {
+	var p = promisify(createApplication);
 
-		logger.info('saving application %s', name);
-		application.save(function(err) {
-			return callback(err, application);
-		});
-	});
+	return p(name, production, key, master_secret, secret);
 };
 
 /**
@@ -62,7 +44,6 @@ var configureIOS = function(application, pfxData, passphrase, callback) {
 };
 
 module.exports = {
-	createAuthToken: createAuthToken,
-	create: createApplication,
+	create: createApplicationPromise,
 	configureIOS: configureIOS
 };

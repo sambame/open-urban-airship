@@ -9,7 +9,7 @@ var mongoose = require('mongoose'),
 var DeviceSchema = new Schema({
     token: { type: String, required: true },
     alias: { type: String },
-    platform: { type: String, required: true},
+    platform: { type: String, required: true, enum: ["ios", "android", "test"]},
     _application: { type: Schema.Types.ObjectId, ref: 'Application', required: true },
 	status: {type: String, 'default': 'active', required: true},
     apid: { type: String, default: uuid }

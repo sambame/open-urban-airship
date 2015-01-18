@@ -4,9 +4,7 @@
 
 var device = require("./../controllers/device"),
 	Push = require("./../controllers/push"),
-	Device = require("../controllers/device"),
- 	fs = require("fs"),
-	path = require("path");	
+	Device = require("../controllers/device");
 
 
 var push = function (req, res) {
@@ -36,13 +34,6 @@ var push = function (req, res) {
 	});
 };
 
-var apis = function(req, res) {
-	var filename = path.join(process.cwd(), "/static/discovery/push-v1.json");
-    var fileStream = fs.createReadStream(filename);
-    fileStream.pipe(res);
-};
-
 module.exports = {
-	push: push,
-	apis: apis
+	push: push
 };
