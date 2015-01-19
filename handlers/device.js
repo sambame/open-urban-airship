@@ -12,6 +12,10 @@ var createDevice = function (req, res) {
         return res.status(400).end();
     }
 
+    if (!req.body.platform) {
+        return res.status(400).end();
+    }
+
     var deviceToken = req.params.token.toLowerCase();
 
     Device.create(req.user.app, req.body.platform, deviceToken, req.body.alias, function(err, device) {

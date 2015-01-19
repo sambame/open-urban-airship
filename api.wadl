@@ -170,5 +170,48 @@
                 </request>
             </method>
         </resource>
+
+        <resource path="partner/companies/{companyId}/app/{appKey}">
+            <param name="companyId" required="true" style="template" type="xsd:string">
+                <doc>Represents the unique id of the company</doc>
+            </param>
+
+            <param name="appKey" required="true" style="template" type="xsd:string">
+                <doc>Represents the key of the app</doc>
+            </param>
+
+            <method id="updateApplication" name="POST" apigee:displayName="Update Application">
+                <apigee:tags>
+                    <apigee:tag primary="true">Partner</apigee:tag>
+                </apigee:tags>
+
+                <doc>Update an existing app.</doc>
+                <request>
+                    <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
+                        <doc>Content type.</doc>
+                    </param>
+                    <param default="application/vnd.urbanairship+json; version=3;" name="Accept" required="true" style="header" type="xsd:string">
+                        <doc>Accept.</doc>
+                    </param>
+                    <representation mediaType="application/json">
+                        <apigee:payload required="true">
+                            <apigee:content>
+                                <![CDATA[
+                                {
+                                    "name": "A Partner App",
+                                    "production": false,
+                                    "android_package_name": "com.packagename",
+                                    "gcm_api_key": "some.gcm.key",
+                                    "ios_certificate": "<base64 encoded string of the .p12 with the private key>",
+                                    "ios_certificate_password": "<optional password, if the .p12 was exported with one>"
+                                }
+                                ]]>
+                            </apigee:content>
+                        </apigee:payload>
+                    </representation>
+                </request>
+            </method>
+
+        </resource>
     </resources>
 </application>
