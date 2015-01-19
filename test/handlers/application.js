@@ -8,6 +8,7 @@ var mongoose = require("mongoose"),
     generalConfig = require("config").general,
     Application = require("../../controllers/application"),
     request = require("supertest"),
+    Q = require("q"),
     app = require("../../app");
 
 describe("application", function() {
@@ -16,6 +17,7 @@ describe("application", function() {
         applicationSecret = "applicationSecret",
         applicationMasterSecret = "applicationMasterSecret",
         passphrase = "thisIsAPassword",
+        ApplicationAndroidGCMKey = "ApplicationAndroidGCMKey",
         deviceToken = "deviceToken";
 
     beforeEach(function (done) {
@@ -48,6 +50,42 @@ describe("application", function() {
                 should.exist(res);
 
                 done();
+            });
+    });
+
+    it("update application", function(done) {
+        Application.create(applicationName, false, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.saveQ();
+            })
+            .then(function(application) {
+                var deferred = Q.defer();
+
+                request(app)
+                    .post("/api/partner/companies/{companyId}/app/" + application.key)
+                    .auth(application.key, application.secret)
+                    .send({gcm_api_key: ApplicationAndroidGCMKey})
+                    .expect(200)
+                    .end(function (err, res) {
+                        should.not.exists(err);
+                        should.exist(res);
+
+                        deferred.resolve();
+                    });
+
+                return deferred.promise;
+            })
+            .then(function() {
+                return Application.getByKey(applicationKey);
+            })
+            .then(function(application) {
+                should.exist(application.android);
+                should.exist(application.android.gcm_api_key);
+                application.android.gcm_api_key.should.equal(ApplicationAndroidGCMKey);
+            })
+            .then(done)
+            .catch(function(err) {
+                should.not.exists(err);
             });
     });
 

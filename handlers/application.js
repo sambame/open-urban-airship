@@ -16,6 +16,37 @@ var createSecureRandom = function(callback) {
     });
 };
 
+var updateApplication = function  (req, res) {
+    var params = req.body;
+
+    var application = req.user.app;
+
+    if (params.ios_certificate) {
+        application.ios.pfxData = new Buffer(params.ios_certificate, 'base64');
+    }
+
+    if (params.passphrase) {
+        application.ios.passphrase = params.ios_certificate_password;
+    }
+
+    if (params.gcm_api_key) {
+        application.android.gcm_api_key = params.gcm_api_key;
+    }
+
+    if (params.android_package_name) {
+        application.android.android_package_name = params.android_package_name;
+    }
+
+    application.save(function(err) {
+        if (err) {
+            logger.error(util.format("failed to save application"), err);
+            res.status(500);
+        }
+
+        res.end();
+    });
+};
+
 var createApplication = function (req, res) {
     var params = req.body;
     async.parallel(
@@ -29,6 +60,13 @@ var createApplication = function (req, res) {
                 .then(function(application) {
                     if (params.ios_certificate) {
                         application.ios = {pfxData: new Buffer(params.ios_certificate, 'base64'), passphrase: params.ios_certificate_password};
+                    }
+
+                    return application;
+                })
+                .then(function(application) {
+                    if (params.gcm_api_key) {
+                        application.android = {gcm_api_key: params.gcm_api_key, android_package_name: params.android_package_name};
                     }
 
                     return application;
@@ -114,6 +152,7 @@ var configureIOS = function(req, res) {
 
 module.exports = {
     create: createApplication,
+    update: updateApplication,
     list: listApplications,
     configureIOS: configureIOS
 };

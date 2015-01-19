@@ -24,6 +24,11 @@
                     <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
                         <doc>Content type.</doc>
                     </param>
+
+                    <param default="application/vnd.urbanairship+json; version=3;" name="Accept" required="true" style="header" type="xsd:string">
+                        <doc>Accept.</doc>
+                    </param>
+
                     <representation mediaType="application/json">
                         <apigee:payload required="true">
                             <apigee:content>
@@ -49,6 +54,12 @@
                 <apigee:authentication required="true"/>
 
                 <doc>Fetch device tokens registered to this application, along with associated metadata.</doc>
+
+                <request>
+                    <param default="application/vnd.urbanairship+json; version=3;" name="Accept" required="true" style="header" type="xsd:string">
+                        <doc>Accept.</doc>
+                    </param>
+                </request>                
             </method>            
         </resource>
 
@@ -65,6 +76,11 @@
                     <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
                         <doc>Content type.</doc>
                     </param>
+
+                    <param default="application/vnd.urbanairship+json; version=3;" name="Accept" required="true" style="header" type="xsd:string">
+                        <doc>Accept.</doc>
+                    </param>
+
                     <representation mediaType="application/json">
                         <apigee:payload required="true">
                             <apigee:content>
@@ -115,6 +131,11 @@
                        { "..." }
                     ]
                 </doc>
+                <request>
+                    <param default="application/vnd.urbanairship+json; version=3;" name="Accept" required="true" style="header" type="xsd:string">
+                        <doc>Accept.</doc>
+                    </param>                    
+                </request>
             </method>
 
             <method id="createApplication" name="POST" apigee:displayName="Create Application">
@@ -127,6 +148,9 @@
                     <param default="application/json" name="Content-Type" required="true" style="header" type="xsd:string">
                         <doc>Content type.</doc>
                     </param>
+                    <param default="application/vnd.urbanairship+json; version=3;" name="Accept" required="true" style="header" type="xsd:string">
+                        <doc>Accept.</doc>
+                    </param>                    
                     <representation mediaType="application/json">
                         <apigee:payload required="true">
                             <apigee:content>

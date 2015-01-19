@@ -6,6 +6,7 @@
     "mongoose": "latest",
     "express-resource": "latest",
     "apn": "latest",
+    "node-gcm": "lastest",
     "node-gcm": "latest",
     "winston": "latest",
     "async": "latest",
@@ -20,7 +21,8 @@
     "js-yaml": "latest",
     "minioc": "latest",
     "node-uuid": "latest",
-    "q": "latest"
+    "q": "latest",
+    "mongoose-q": "latest"
   },
   "devDependencies": {
     "debug": "latest",
@@ -42,6 +44,6 @@
     "npm": "latest"
   },
   "scripts": {
-    "test": "mocha --recursive"
+    "test": "./node_modules/.bin/istanbul test ./node_modules/.bin/_mocha -- -R spec --recursive"
   }
 }

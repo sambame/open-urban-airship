@@ -43,7 +43,12 @@ var configureIOS = function(application, pfxData, passphrase, callback) {
 	application.save(callback);
 };
 
+var getByKey = function(applicationKey) {
+	return ApplicationModel.findOneQ({key: applicationKey})
+};
+
 module.exports = {
 	create: createApplicationPromise,
+	getByKey: getByKey,
 	configureIOS: configureIOS
 };

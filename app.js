@@ -137,6 +137,9 @@ app.map({
                             put: [authenticate(), application.configureIOS]
                         }
                     }
+                },
+                '/app/:appKey': {
+                    post: [authenticate(), application.update]
                 }
             }
         },

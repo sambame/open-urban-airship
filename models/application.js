@@ -2,7 +2,7 @@
 /*eslint-env node */
 "use strict";
 
-var mongoose = require('mongoose'),
+var mongoose = require('mongoose-q')(),
     Schema = mongoose.Schema,
     Q = require("q");
 
@@ -15,6 +15,10 @@ var ApplicationSchema = new Schema({
     ios: {
         pfxData: Buffer,
         passphrase: String
+    },
+    android: {
+        gcm_api_key: String,
+        android_package_name: String
     }
 });
 

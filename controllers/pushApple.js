@@ -76,77 +76,6 @@ function createFeedbackIfNeeded(application) {
 
 /**
  *
- * @param {object} notification
- * @param {DeviceModel} device
- * @returns {Notification}
- */
-function buildNotification(notification) {
-    function isReservedProperty(propertyName) {
-        var properties = {
-            android: 1,
-            ios: 1,
-            amazon: 1,
-            blackberry: 1,
-            mpns: 1,
-            wns: 1
-        };
-
-        return propertyName in properties;
-    }
-
-    var note = new apn.Notification();
-
-    for (var key in notification) {
-        if (!notification.hasOwnProperty(key)) {
-            continue;
-        }
-
-        if (isReservedProperty(key)) {
-            continue;
-        }
-
-        note[key] = notification[key];
-    }
-
-    var ios = notification.ios || {};
-
-    for (var key in ios) {
-        if (!ios.hasOwnProperty(key)) {
-            continue;
-        }
-
-        if (isReservedProperty(key)) {
-            continue;
-        }
-
-        note[key] = ios[key];
-    }
-
-    var extra = notification.extra || {};
-
-    for (var extraKey in extra) {
-        if (!extra.hasOwnProperty(extraKey)) {
-            continue;
-        }
-
-        note.payload[extraKey] = extra[extraKey];
-    }
-
-    var iosExtra = ios.extra || {};
-
-    for (var iosExtraKey in iosExtra) {
-        if (!iosExtra.hasOwnProperty(iosExtraKey)) {
-            continue;
-        }
-
-        note.payload[extraKey] = iosExtra[iosExtraKey];
-    }
-
-    return note;
-}
-
-/**
- *
  * @param {ApplicationModel} application
  * @param {DeviceModel} device
  * @param {object} notification
@@ -158,9 +87,10 @@ var pushAppleNotification = function(application, device, notification) {
 
     logger.debug(util.format("connection options %s", JSON.stringify(options)));
 
-    var apnsConnection = new apn.Connection(options);
+    var apnsConnection = new apn.Connection(options),
+        message = buildMessage(notification, "ios", "payload", apn.Notification);
 
-    apnsConnection.pushNotification(buildNotification(notification), new apn.Device(device.token));
+    apnsConnection.pushNotification(message, new apn.Device(device.token));
 };
 
 module.exports = {

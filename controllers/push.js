@@ -33,6 +33,10 @@ minioc.register("push-ios").as.singleton.factory(function() {
     return require("./pushApple");
 });
 
+minioc.register("push-android").as.singleton.factory(function() {
+    return require("./pushAndroid");
+});
+
 module.exports = {
     push: push
 };
