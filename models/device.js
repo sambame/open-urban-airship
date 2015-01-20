@@ -15,7 +15,7 @@ var DeviceSchema = new Schema({
     apid: { type: String, default: uuid }
 });
 
-DeviceSchema.index({token: 1,  _application: 1}, {unique: true});
-DeviceSchema.index({alias: 1,  _application: 1}, {unique: true});
+DeviceSchema.index({_application: 1, token: 1}, {unique: true});
+DeviceSchema.index({_application: 1, alias: 1}, {unique: false});
 
 module.exports = mongoose.model('Device', DeviceSchema);

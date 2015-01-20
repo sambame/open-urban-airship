@@ -7,6 +7,8 @@ var DeviceModel = require("../models/device"),
     logger = require("../logger"),
     util = require("util");
 
+var supportedPlatforms = ["ios", "android"];
+
 var createDevice = function (req, res) {
     if (!req.params.token) {
         return res.status(400).end();
@@ -16,7 +18,17 @@ var createDevice = function (req, res) {
         return res.status(400).end();
     }
 
-    var deviceToken = req.params.token.toLowerCase();
+    req.body.platform = req.body.platform.toLowerCase();
+
+    if (supportedPlatforms.indexOf(req.body.platform) === -1) {
+        return res.status(400).end();
+    }
+
+    var deviceToken = req.params.token;
+
+    if (req.body.platform === "ios") {
+        deviceToken = deviceToken.toLowerCase();
+    }
 
     Device.create(req.user.app, req.body.platform, deviceToken, req.body.alias, function(err, device) {
         if (err) {

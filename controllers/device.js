@@ -47,12 +47,19 @@ var createDevice = function(application, platform, token, alias, callback) {
  * @param {function} callback
  */
 var getByAudience = function (application, audience, callback) {
+	var condition = [];
+
+	if (audience.alias) {
+		condition.push({alias: audience.alias});
+	}
+
+	if (audience.device_token) {
+		condition.push({token: audience.device_token});
+	}
+
 	DeviceModel.find(
 		{
-			$or: [
-				{alias: audience.alias},
-				{token: audience.device_token}
-			],
+			$or: condition,
 			_application: application._id
 		},
 		function(err, devices) {

@@ -83,10 +83,10 @@ var createApplication = function (req, res) {
                     });
                 })
                 .catch(function(err) {
-                    logger.error(util.format("failed to save %s %s", params, err));
                     res.status(500);
                     res.json({
-                        ok: false
+                        ok: false,
+                        err: err.message
                     })
                 });
         }

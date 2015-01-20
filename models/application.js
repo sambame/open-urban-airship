@@ -3,8 +3,7 @@
 "use strict";
 
 var mongoose = require('mongoose-q')(),
-    Schema = mongoose.Schema,
-    Q = require("q");
+    Schema = mongoose.Schema;
 
 var ApplicationSchema = new Schema({
     name: { type: String, required: true },
@@ -21,20 +20,5 @@ var ApplicationSchema = new Schema({
         android_package_name: String
     }
 });
-
-ApplicationSchema.methods.saveQ = function() {
-    var deferred = Q.defer();
-
-    this.save(function(error, obj) {
-        if (error) {
-            deferred.reject(new Error(error));
-        } else {
-            deferred.resolve(obj);
-        }
-    });
-
-    return deferred.promise;
-};
-
 
 module.exports = mongoose.model('Application', ApplicationSchema);
