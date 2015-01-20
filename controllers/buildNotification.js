@@ -50,7 +50,7 @@ function buildMessage(notification, platform, platformDataKey, platformNotificat
             continue;
         }
 
-        msg[key] = platformOverride[key];
+        msg[platformOverrideKey] = platformOverride[platformOverrideKey];
     }
 
     var extra = notification.extra || {};
@@ -70,7 +70,7 @@ function buildMessage(notification, platform, platformDataKey, platformNotificat
             continue;
         }
 
-        msg[platformDataKey][extraKey] = platformExtra[platformExtraKey];
+        msg[platformDataKey][platformExtraKey] = platformExtra[platformExtraKey];
     }
 
     return msg;

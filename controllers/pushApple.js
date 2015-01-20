@@ -3,6 +3,7 @@
 "use strict";
 var logger = require("../logger"),
     util = require("util"),
+    buildMessage = require("./buildNotification"),
     apn = require("apn");
 
 var	feedbacks = {};
