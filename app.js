@@ -144,7 +144,8 @@ app.map({
             }
         },
         '/device_tokens/:token': {
-            put: [authenticate(), device.put]
+            put: [authenticate(), device.put],
+            "delete": [authenticate(), device["delete"]]
         },
         '/device_tokens/': {
             get: [authenticate(), device.list]

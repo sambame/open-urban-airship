@@ -5,6 +5,7 @@
 var ApplicationModel = require("../models/application"),
     logger = require("../logger"),
     fs = require('fs'),
+    util = require('util'),
     crypto = require("crypto"),
     async = require("async"),
     base64url = require('base64url'),
@@ -36,6 +37,8 @@ var updateApplication = function  (req, res) {
     if (params.android_package_name) {
         application.android.android_package_name = params.android_package_name;
     }
+
+    application.production = !!params.production;
 
     application.save(function(err) {
         if (err) {
@@ -83,6 +86,7 @@ var createApplication = function (req, res) {
                     });
                 })
                 .catch(function(err) {
+                    logger.error(util.format("failed to create app %s", err), err);
                     res.status(500);
                     res.json({
                         ok: false,

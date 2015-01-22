@@ -7,14 +7,37 @@ var DeviceModel = require("../models/device"),
     logger = require("../logger"),
     util = require("util");
 
-var supportedPlatforms = ["ios", "android"];
+var supportedPlatforms = ["ios", "android", "test"];
+
+var deleteDevice = function (req, res) {
+    if (!req.params.token) {
+        return res.status(400).end();
+    }
+
+    logger.info(util.format("deleteDevice %s", JSON.stringify(req.body)));
+
+    var deviceToken = req.params.token;
+
+    Device.deactivate(req.user.app, deviceToken, function(err) {
+        if (err) {
+            logger.error(util.format("failed to deactivate device %s", err));
+            return res.status(500).json({ok: false});
+        }
+
+        res.status(204).json({
+            ok: true
+        });
+    });
+};
 
 var createDevice = function (req, res) {
     if (!req.params.token) {
         return res.status(400).end();
     }
 
-    if (!req.body.platform) {
+    logger.info(util.format("createDevice %s", JSON.stringify(req.body)));
+
+    if (!req.body.platform || typeof req.body.platform !== "string") {
         return res.status(400).end();
     }
 
@@ -83,5 +106,6 @@ var listDevices = function (req, res) {
 
 module.exports = {
     put: createDevice,
-    list: listDevices
+    list: listDevices,
+    "delete": deleteDevice
 };

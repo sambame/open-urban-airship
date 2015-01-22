@@ -53,7 +53,7 @@ function createFeedbackIfNeeded(application) {
         });
     } else {
         feedback.on("feedback", function (device, time) {
-            logger.info(util.format("got feedback on %s time %s %s %s", application.name, device, time));
+            logger.info(util.format("got feedback on %s time '%s' '%s'", application.name, device, time));
 
             Device.find({token: buffer}, function(err, devices) {
                 devices.forEach(function (device) {

@@ -44,7 +44,27 @@ describe("device", function() {
                     should.not.exists(err);
                     should.exists(device);
 
-                    Device.getByAudience(application, {deviceToken: deviceToken}, function(err, device) {
+                    Device.getByAudience(application, {device_token: deviceToken}, function(err, device) {
+                        should.not.exists(err);
+                        should.exists(device);
+
+                        done();
+                    });
+                });
+            })
+            .catch(function(err) {
+                should.not.exists(err);
+            });
+    });
+
+    it("getAudience (apid)", function(done) {
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                    should.not.exists(err);
+                    should.exists(device);
+
+                    Device.getByAudience(application, {apid: device.apid}, function(err, device) {
                         should.not.exists(err);
                         should.exists(device);
 

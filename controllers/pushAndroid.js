@@ -15,6 +15,8 @@ var pushAndroidNotification = function(application, device, notification) {
     sender.send(message, registrationIds, 3, function (err, result) {
         if (err) {
             logger.error(util.format("failed to send push %s", err));
+        } else {
+            logger.info(util.format("finish sending %s", JSON.stringify(result)))
         }
     });
 };

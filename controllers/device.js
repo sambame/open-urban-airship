@@ -43,6 +43,23 @@ var createDevice = function(application, platform, token, alias, callback) {
 /**
  *
  * @param {ApplicationModel} application
+ * @param {string} token
+ * @param {function} callback
+ */
+var deactivateDevice = function(application, token, callback) {
+	DeviceModel.update({token: token, _application: application._id}, {$set: {status: "inactive"}}, function (err) {
+		if (err) {
+			logger.error(util.format("failed to look for device %s", err));
+
+		}
+
+		return callback(err);
+	});
+};
+
+/**
+ *
+ * @param {ApplicationModel} application
  * @param {object} audience
  * @param {function} callback
  */
@@ -57,6 +74,10 @@ var getByAudience = function (application, audience, callback) {
 		condition.push({token: audience.device_token});
 	}
 
+	if (audience.apid) {
+		condition.push({apid: audience.apid});
+	}
+
 	DeviceModel.find(
 		{
 			$or: condition,
@@ -64,7 +85,7 @@ var getByAudience = function (application, audience, callback) {
 		},
 		function(err, devices) {
 			if (err) {
-				logger.error(util.format('failed to find devices by alias %s', err));
+				logger.error(util.format('failed to find devices by %s %s', JSON.stringify(audience), err), err);
 			}
 
 			callback(err, devices);
@@ -74,5 +95,6 @@ var getByAudience = function (application, audience, callback) {
 
 module.exports = {
 	getByAudience: getByAudience,
-	create: createDevice
+	create: createDevice,
+	deactivate: deactivateDevice
 };
