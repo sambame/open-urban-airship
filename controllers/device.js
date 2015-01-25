@@ -11,9 +11,10 @@ var DeviceModel = require("../models/device"),
  * @param {string} platform
  * @param {string} token
  * @param {string} alias
+ * @param {Array} tags
  * @param {function} callback
  */
-var createDevice = function(application, platform, token, alias, callback) {
+var createDevice = function(application, platform, token, alias, tags, callback) {
 	DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
 		if (err) {
 			logger.error(util.format("failed to look for device %s", err));
@@ -28,7 +29,8 @@ var createDevice = function(application, platform, token, alias, callback) {
 
 		device.platform = platform;
 		device.alias = alias;
-		device.status = "active";
+		device.active = true;
+        device.tags = tags;
 
 		device.save(function (err, device) {
 			if (err) {
@@ -75,10 +77,14 @@ var getByAudience = function (application, audience, callback) {
 	}
 
 	if (audience.apid) {
-		condition.push({apid: audience.apid});
+		condition.push({_id: audience.apid});
 	}
 
-	DeviceModel.find(
+    if (audience.tags) {
+        condition.push({tags: audience.tags});
+    }
+
+    DeviceModel.find(
 		{
 			$or: condition,
 			_application: application._id

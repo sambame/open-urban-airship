@@ -3,12 +3,17 @@
 "use strict";
 
 var winston = require('winston');
-  
- var logger = new (winston.Logger)({
-    transports: [
-      new (winston.transports.Console)()
-    ]
-  });
+
+var transports = [];
+
+if (process.env.NODE_ENV !== "test") {
+    transports.push(new (winston.transports.Console)({colorize: true, level: "verbose", timestamp: true, handleExceptions: process.env.NODE_ENV === "production"}));
+}
+
+
+var logger = new (winston.Logger)({
+    transports: transports
+});
 
 
 logger.verbose = logger.verbose;

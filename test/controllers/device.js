@@ -40,7 +40,7 @@ describe("device", function() {
     it("getAudience", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
                     should.not.exists(err);
                     should.exists(device);
 
@@ -60,7 +60,7 @@ describe("device", function() {
     it("getAudience (apid)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
                     should.not.exists(err);
                     should.exists(device);
 

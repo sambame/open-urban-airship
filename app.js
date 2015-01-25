@@ -7,6 +7,7 @@ var express = require('express'),
     device = require('./handlers/device'),
     BasicStrategy = require("passport-http").BasicStrategy,
     application = require('./handlers/application'),
+    migration = require('./handlers/migration'),
     ApplicationModel = require("./models/application"),
     push = require('./handlers/push'),
     bodyParser = require("body-parser"),
@@ -83,7 +84,7 @@ passport.use(new BasicStrategy(
         // indicate failure.  Otherwise, return the authenticated `user`.
         ApplicationModel.findOne(
             {
-                key: key
+                _id: key
             },
             function (err, app) {
                 if (err) {
@@ -127,6 +128,17 @@ if (process.env.NODE_ENV !== "test") {
 
 app.map({
     '/api': {
+        '/migration': {
+            '/urbanairship': {
+                post: [authenticate(), migration.urbanAirship]
+            },
+            '/apps': {
+                post: [migration.apps]
+            },
+            '/devices': {
+                post: [migration.devices]
+            }
+        },
         '/partner': {
             '/companies/:companyId': {
                 '/apps': {

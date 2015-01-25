@@ -53,7 +53,9 @@ var createDevice = function (req, res) {
         deviceToken = deviceToken.toLowerCase();
     }
 
-    Device.create(req.user.app, req.body.platform, deviceToken, req.body.alias, function(err, device) {
+    var params = req.body;
+
+    Device.create(req.user.app, params.platform, deviceToken, params.alias, params.tags, function(err, device) {
         if (err) {
             logger.error(util.format("failed to look for device %s", err));
             return res.status(500).json({ok: false});
@@ -80,10 +82,14 @@ var listDevices = function (req, res) {
         }
 
         devices.forEach(function(device) {
-            var deviceToken = {device_token: device.token, active: device.status === 'active'};
+            var deviceToken = {device_token: device.token, active: device.status === 'active', apid: device.apid};
 
             if (device.alias) {
                 deviceToken.alias = device.alias;
+            }
+
+            if (device.tags) {
+                deviceToken.tags = device.tags;
             }
 
             if (deviceToken.active) {

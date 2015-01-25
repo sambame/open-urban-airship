@@ -22,7 +22,9 @@
     "minioc": "latest",
     "node-uuid": "latest",
     "q": "latest",
-    "mongoose-q": "latest"
+    "mongoose-q": "latest",
+    "kue": "latest",
+    "request": "latest"
   },
   "devDependencies": {
     "debug": "latest",

@@ -20,7 +20,7 @@ var createApplication = function(name, production, key, master_secret, secret, c
 	application.production = production;
 	application.master_secret = master_secret;
 	application.secret = secret;
-	application.key = key;
+	application._id = key;
 
 	callback(null, application);
 };
@@ -44,7 +44,7 @@ var configureIOS = function(application, pfxData, passphrase, callback) {
 };
 
 var getByKey = function(applicationKey) {
-	return ApplicationModel.findOneQ({key: applicationKey})
+	return ApplicationModel.findOneQ({_id: applicationKey})
 };
 
 module.exports = {

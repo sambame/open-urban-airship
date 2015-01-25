@@ -53,7 +53,7 @@ describe("device", function() {
                 return application.saveQ();
             })
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, function(err, device) {
+                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
                     should.not.exists(err);
                     should.exists(device);
 

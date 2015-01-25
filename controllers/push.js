@@ -15,8 +15,8 @@ var push = function(application, audience, notification, callback) {
         for (var i=0;i<devices.length;i++) {
             var currentDevice = devices[i];
 
-            if (currentDevice.status !== "active") {
-                logger.debug(util.format("device %s status %s", currentDevice.token, currentDevice.status));
+            if (!currentDevice.active) {
+                logger.debug(util.format("device %s active %s", currentDevice.token, currentDevice.active));
                 continue;
             }
 
