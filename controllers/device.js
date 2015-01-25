@@ -34,7 +34,7 @@ var createDevice = function(application, platform, token, alias, tags, callback)
 
 		device.save(function (err, device) {
 			if (err) {
-				logger.error(util.format("failed to save device %s", err));
+				logger.error(util.format("failed to save device %s", err), err);
 			}
 
 			callback(err, device);

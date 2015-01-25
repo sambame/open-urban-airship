@@ -40,7 +40,8 @@ tasks.process("migration.urbanAirship.singleAPID", 50, function(job, done) {
             }
 
             if (!apidDevice.gcm_registration_id) {
-
+                logger.warn(util.format("device %s has no gcm_registration_id", apidDevice.apid));
+                return done();
             }
 
             var device = {
