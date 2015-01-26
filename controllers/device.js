@@ -5,6 +5,13 @@ var DeviceModel = require("../models/device"),
 	logger = require("../logger"),
 	util = require("util");
 
+var iosTokenLength = 64,
+    apidTokenLength = 36;
+
+function isCaseInsenseticeToken(token) {
+    return token.length <= iosTokenLength;
+}
+
 /**
  *
  * @param {String|ApplicationModel} application
@@ -15,7 +22,11 @@ var DeviceModel = require("../models/device"),
  * @param {function} callback
  */
 var createDevice = function(application, platform, token, alias, tags, callback) {
-	function create_or_update(device) {
+	if (isCaseInsenseticeToken(token)) {
+        token = token.toUpperCase();
+    }
+
+    function createOrUpdate(device) {
         if (!device) {
             device = new DeviceModel();
             device.token = token;
@@ -33,7 +44,7 @@ var createDevice = function(application, platform, token, alias, tags, callback)
     if (!callback) {
         return DeviceModel.findOneQ({token: token, _application: application._id})
             .then(function(device) {
-                return create_or_update(device).saveQ();
+                return createOrUpdate(device).saveQ();
             });
     } else {
         DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
@@ -42,7 +53,7 @@ var createDevice = function(application, platform, token, alias, tags, callback)
                 return callback(err);
             }
 
-            create_or_update(device).save(function (err, device) {
+            createOrUpdate(device).save(function (err, device) {
                 if (err) {
                     logger.error(util.format("failed to save device %s", err), err);
                 }
@@ -60,7 +71,11 @@ var createDevice = function(application, platform, token, alias, tags, callback)
  * @param {function} callback
  */
 var deactivateDevice = function(application, token, callback) {
-	DeviceModel.update({token: token, _application: application._id}, {$set: {status: "inactive"}}, function (err) {
+    if (isCaseInsenseticeToken(token)) {
+        token = token.toUpperCase();
+    }
+
+	DeviceModel.update({token: token, _application: application._id}, {$set: {active: false}}, function (err) {
 		if (err) {
 			logger.error(util.format("failed to look for device %s", err));
 
@@ -84,6 +99,10 @@ var getByAudience = function (application, audience, callback) {
 	}
 
 	if (audience.device_token) {
+        if (isCaseInsenseticeToken(audience.device_token)) {
+            audience.device_token = audience.device_token.toUpperCase();
+        }
+
 		condition.push({token: audience.device_token});
 	}
 
