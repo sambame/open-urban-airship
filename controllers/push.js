@@ -16,13 +16,13 @@ var push = function(application, audience, notification, callback) {
             var currentDevice = devices[i];
 
             if (!currentDevice.active) {
-                logger.debug(util.format("device %s active %s", currentDevice.token, currentDevice.active));
+                logger.info(util.format("device %s is not active (alias: %s)", currentDevice.token, currentDevice.alias));
                 continue;
             }
 
             minioc.get("push-" + currentDevice.platform).push(application, currentDevice, notification);
 
-            logger.debug(util.format("%s: sending push notification %s to %s", application.name, JSON.stringify(notification), devices[i].apid));
+            logger.info(util.format("%s: sending push notification %s to %s", application.name, JSON.stringify(notification), devices[i].apid));
         }
 
         callback(null, devices);

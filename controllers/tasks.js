@@ -18,20 +18,22 @@ var jobs = kue.createQueue({
     }
 });
 
-kue.app.listen(3000);
+if (process.env.NODE_ENV !== "test") {
+    kue.app.listen(3000);
 
-jobs.active( function( err, ids ) {
-    if (err) {
-        logger.error(util.format("failed to active redis %s", err), err);
-    }
-    if (ids) {
-        ids.forEach(function (id) {
-            kue.Job.get(id, function (err, job) {
-                job.inactive();
+    jobs.active(function (err, ids) {
+        if (err) {
+            logger.error(util.format("failed to active redis %s", err), err);
+        }
+        if (ids) {
+            ids.forEach(function (id) {
+                kue.Job.get(id, function (err, job) {
+                    job.inactive();
+                });
             });
-        });
-    }
-});
+        }
+    });
+}
 
 module.exports = {
     create: function(name, params) {

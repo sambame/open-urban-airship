@@ -45,7 +45,7 @@ function createFeedbackIfNeeded(application) {
 
     if (application.production) {
         feedback.on("feedback", function (devices) {
-            logger.info(util.format("got feedback on %s time %s %s", application.name, devices));
+            logger.info(util.format("got feedback on %s %s", application.name, JSON.stringify(devices)));
 
             devices.forEach(function (item) {
                 // Do something with item.device and item.time;

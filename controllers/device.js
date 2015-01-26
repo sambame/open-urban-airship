@@ -7,7 +7,7 @@ var DeviceModel = require("../models/device"),
 
 /**
  *
- * @param {ApplicationModel} application
+ * @param {String|ApplicationModel} application
  * @param {string} platform
  * @param {string} token
  * @param {string} alias
@@ -15,31 +15,42 @@ var DeviceModel = require("../models/device"),
  * @param {function} callback
  */
 var createDevice = function(application, platform, token, alias, tags, callback) {
-	DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
-		if (err) {
-			logger.error(util.format("failed to look for device %s", err));
-			return callback(err);
-		}
+	function create_or_update(device) {
+        if (!device) {
+            device = new DeviceModel();
+            device.token = token;
+            device._application =  application._id || application;
+        }
 
-		if (!device) {
-			device = new DeviceModel();
-			device.token = token;
-			device._application = application._id;
-		}
-
-		device.platform = platform;
-		device.alias = alias;
-		device.active = true;
+        device.platform = platform;
+        device.alias = alias;
+        device.active = true;
         device.tags = tags;
 
-		device.save(function (err, device) {
-			if (err) {
-				logger.error(util.format("failed to save device %s", err), err);
-			}
+        return device;
+    }
 
-			callback(err, device);
-		});
-	});
+    if (!callback) {
+        return DeviceModel.findOneQ({token: token, _application: application._id})
+            .then(function(device) {
+                return create_or_update(device).saveQ();
+            });
+    } else {
+        DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
+            if (err) {
+                logger.error(util.format("failed to look for device %s", err));
+                return callback(err);
+            }
+
+            create_or_update(device).save(function (err, device) {
+                if (err) {
+                    logger.error(util.format("failed to save device %s", err), err);
+                }
+
+                callback(err, device);
+            });
+        });
+    }
 };
 
 /**

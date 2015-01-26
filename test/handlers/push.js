@@ -17,7 +17,10 @@ describe("device", function() {
         applicationSecret = "applicationSecret",
         applicationMasterSecret = "applicationMasterSecret",
         devicePlatform = "test",
-        deviceToken = "deviceToken";
+        deviceAlias = "deviceAlias",
+        deviceToken = "deviceToken",
+        deviceToken1 = "deviceToken1",
+        deviceToken2 = "deviceToken2";
 
     beforeEach(function (done) {
         this.sinon = sinon.sandbox.create();
@@ -39,7 +42,7 @@ describe("device", function() {
         });
     });
 
-    it("push notification to a device", function(done) {
+    it("push notification to a device (token)", function(done) {
         var pushSpy = this.sinon.spy();
 
         minioc.register("push-" + devicePlatform).as.value(
@@ -76,4 +79,120 @@ describe("device", function() {
                 should.not.exists(err);
             });
     });
+
+    it("push notification to a device (apid)", function(done) {
+        var pushSpy = this.sinon.spy();
+
+        minioc.register("push-" + devicePlatform).as.value(
+            {
+                push: pushSpy
+            }
+        );
+
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.saveQ();
+            })
+            .then(function(application) {
+                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
+                    should.not.exists(err);
+                    should.exists(device);
+
+                    request(app)
+                        .post("/api/push/")
+                        .auth(applicationKey, applicationMasterSecret)
+                        .send({audience: {apid: device.apid}, notification: {alert: "test"}})
+                        .expect(200)
+                        .end(function (err, res) {
+                            should.not.exists(err);
+                            should.exist(res);
+                            pushSpy.calledOnce.should.be.true;
+
+                            done();
+                        }
+                    );
+                });
+            })
+            .catch(function() {
+                should.not.exists(err);
+            });
+    });
+
+    it("push notification to a device (alias)", function(done) {
+        var pushSpy = this.sinon.spy();
+
+        minioc.register("push-" + devicePlatform).as.value(
+            {
+                push: pushSpy
+            }
+        );
+
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.saveQ();
+            })
+            .then(function(application) {
+                Device.create(application, devicePlatform, deviceToken, deviceAlias, null, function(err, device) {
+                    should.not.exists(err);
+                    should.exists(device);
+
+                    request(app)
+                        .post("/api/push/")
+                        .auth(applicationKey, applicationMasterSecret)
+                        .send({audience: {alias: device.alias}, notification: {alert: "test"}})
+                        .expect(200)
+                        .end(function (err, res) {
+                            should.not.exists(err);
+                            should.exist(res);
+                            pushSpy.calledOnce.should.be.true;
+
+                            done();
+                        }
+                    );
+                });
+            })
+            .catch(function() {
+                should.not.exists(err);
+            });
+    });
+
+    it("push notification to a device (apid multi)", function(done) {
+        var pushSpy = this.sinon.spy();
+
+        minioc.register("push-" + devicePlatform).as.value(
+            {
+                push: pushSpy
+            }
+        );
+
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.saveQ();
+            })
+            .then(function() {
+                return Device.create(applicationKey, devicePlatform, deviceToken1, deviceAlias, null);
+            })
+            .then(function() {
+                return Device.create(applicationKey, devicePlatform, deviceToken2, deviceAlias, null);
+            }).
+            then(function() {
+                request(app)
+                    .post("/api/push/")
+                    .auth(applicationKey, applicationMasterSecret)
+                    .send({audience: {alias: deviceAlias}, notification: {alert: "test"}})
+                    .expect(200)
+                    .end(function (err, res) {
+                        should.not.exists(err);
+                        should.exist(res);
+                        pushSpy.calledTwice.should.be.true;
+
+                        done();
+                    }
+                );
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
 });
