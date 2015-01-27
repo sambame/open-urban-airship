@@ -41,7 +41,8 @@
     "rewire": "latest",
     "should": "latest",
     "sinon": "latest",
-    "supertest": "0.13.x"
+    "supertest": "0.13.x",
+    "coveralls": "latest"
   },
   "engines": {
     "node": "0.10.x",
