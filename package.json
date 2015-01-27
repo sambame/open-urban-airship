@@ -25,7 +25,7 @@
     "mongoose-q": "latest",
     "kue": "latest",
     "request": "latest",
-    "openssl-wrapper": "latest",
+    "openssl-wrapper": "git://github.com/sambame/node-openssl-wrapper",
     "moment": "latest"
   },
   "devDependencies": {
