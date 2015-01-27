@@ -19,7 +19,7 @@ function validateP12(signedData, password) {
 
             data = data.substr(prefix.length);
 
-            var d = moment(data, 'ddd DD HH:mm:ss YYYY ZZ');
+            var d = moment(data, 'MMM D HH:mm:ss YYYY ZZ');
 
             if (!d.isValid()) {
                 throw new Error("Invalid file (date)");

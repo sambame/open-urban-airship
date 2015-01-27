@@ -49,7 +49,16 @@ var updateApplication = function  (req, res) {
             if (err) {
                 logger.error(util.format("failed to save application"), err);
                 res.status(500);
+
+                return res.json({
+                    ok: false,
+                    err: err.message
+                })
             }
+
+            return res.json({
+                ok: true
+            });
 
             res.end();
         });
