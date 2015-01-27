@@ -50,6 +50,6 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/istanbul test ./node_modules/.bin/_mocha -- -R spec --recursive",
-    "test-on-travis": "./node_modules/.bin/istanbul cover --report lcovonly ./node_modules/.bin/_mocha && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+    "test-on-travis": "./node_modules/.bin/istanbul cover --report lcovonly ./node_modules/.bin/_mocha -- --recursive && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   }
 }
