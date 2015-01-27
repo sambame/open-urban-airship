@@ -1,161 +1,136 @@
-var application = require('./application'),
-    DeviceModel = require("../models/device").DeviceModel,
-	logger = require("../logger").logger,
-    apns = require('apn'),
- 	fs = require('fs'),
-	path = require('path');
-		
-var createDevice = function (req, res) {
-    var output = '';
-    req.setEncoding('utf8');
+/*jslint node: true */
+/*eslint-env node */
+"use strict";
+var DeviceModel = require("../models/device"),
+	logger = require("../logger"),
+	util = require("util");
 
-    req.on('data', function (chunk) {
-        output += chunk;
-    });
+var iosTokenLength = 64,
+    apidTokenLength = 36;
 
-    req.on('end', function () {
-    	var obj = {}; 
-		if (output && output.length > 0) {
-			obj = JSON.parse(output);
-			logger.debug(obj);
-		}
+function isCaseInsenseticeToken(token) {
+    return token.length <= iosTokenLength;
+}
 
-		application.getByRequestAuthApp(req, obj, function (err, app) {
-			if (!err) {
-				var deviceToken = (req.params.token || req.query.token).toLowerCase();
-				
-				try {
-					new apns.Device(deviceToken);
-				} catch (Error) {
-					res.statusCode = 400;
-					res.send('Invalid device token ' + deviceToken);
-					return;	
-				}
+/**
+ *
+ * @param {String|ApplicationModel} application
+ * @param {string} platform
+ * @param {string} token
+ * @param {string} alias
+ * @param {Array} tags
+ * @param {function} callback
+ */
+var createDevice = function(application, platform, token, alias, tags, callback) {
+	if (isCaseInsenseticeToken(token)) {
+        token = token.toUpperCase();
+    }
 
-				DeviceModel.findOne({token: deviceToken, _application: app._id}, function(err, device) {
-					if (!err) {
-						if (!device) {
-							device = new DeviceModel();
-							device.token = deviceToken;
-							device._application = app._id;
-						}
+    function createOrUpdate(device) {
+        if (!device) {
+            device = new DeviceModel();
+            device.token = token;
+            device._application =  application._id || application;
+        }
 
-						device.alias = obj.alias;
-						device.status = 'active';
-						
-						device.save(function(err) {
-							if (err) {
-								logger.error(util.format("failed to save device %s", err));
-							}
-						});
-					} else {
-						logger.error(util.format("failed to look for device %s", err));
-					}
-				});				
-				res.send('OK!');
-			} else {
-				logger.error(util.format('Failed to look for application %s', err));
-				res.statusCode = 400;
-				res.send('Application not found');
-			}
-		});
-    });
+        device.platform = platform;
+        device.alias = alias;
+        device.active = true;
+        device.tags = tags;
+
+        return device;
+    }
+
+    if (!callback) {
+        return DeviceModel.findOneQ({token: token, _application: application._id})
+            .then(function(device) {
+                return createOrUpdate(device).saveQ();
+            });
+    } else {
+        DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
+            if (err) {
+                logger.error(util.format("failed to look for device %s", err));
+                return callback(err);
+            }
+
+            createOrUpdate(device).save(function (err, device) {
+                if (err) {
+                    logger.error(util.format("failed to save device %s", err), err);
+                }
+
+                callback(err, device);
+            });
+        });
+    }
 };
 
-var listDevices = function (req, res) {
-    var output = '';
-    req.setEncoding('utf8');
-	logger.debug('list devices');
-	
-    req.on('data', function (chunk) {
-        output += chunk;
-        
-    });
+/**
+ *
+ * @param {ApplicationModel} application
+ * @param {string} token
+ * @param {function} callback
+ */
+var deactivateDevice = function(application, token, callback) {
+    if (isCaseInsenseticeToken(token)) {
+        token = token.toUpperCase();
+    }
 
-    req.on('end', function () {
-		var obj = {}; 
-		if (output.length > 0) {
-			obj = JSON.parse(output);
-			logger.debug(obj);
-		}
-	
-		application.getByRequestAuthMaster(req, obj, function (err, app) {
-			if (!err) {
-				getByApplication(app).lean().exec(function(err, devices) {
-					var deviceTokens = [];
-					var activeDevices = 0;
-
-					if (err) {
-						res.statusCode = 500;
-					} else {					
-						devices.forEach(function(device) {
-							var deviceToken = {device_token: device.token, active: device.status === 'active'};
-							
-							if (device.alias) {
-								deviceToken.alias = device.alias;
-							}
-							
-							if (deviceToken.active) {
-								activeDevices += 1;
-							}
-							
-							deviceTokens.push(deviceToken);
-						});
-					}
-
-					var list = {
-						device_tokens_count: deviceTokens.length, 
-						device_tokens: deviceTokens,
-						active_device_tokens_count: activeDevices
-					};
-				
-					res.contentType('json');
-					res.send(list);				
-				});
-			} else {
-				logger.error(util.format('Failed to look for application %s', err));
-				res.statusCode = 400;
-				res.send('Application not found');
-			}
-		});
-    });
-};
-
-
-var getByApplication = function (app, cb) {
-    return DeviceModel.find({
-        _application: app._id
-    });
-};
-
-var getByAliasesAndDeviceIds = function (application, aliases, deviceTokens, cb) {
-	aliases = aliases || [];
-	deviceTokens = deviceTokens || [];
-	 
-    logger.debug(util.format("looking for devices by aliases %s and tokens", aliases, deviceTokens));
-    DeviceModel.find({$or: [
-        	{alias: {$in: aliases}},
-        	{token: {$in: deviceTokens}}
-        	],
-        _application: application._id
-    }, function(err, devices) {
+	DeviceModel.update({token: token, _application: application._id}, {$set: {active: false}}, function (err) {
 		if (err) {
-			logger.error(util.format('failed to find devices by alias %s', err));
+			logger.error(util.format("failed to look for device %s", err));
+
 		}
-		
-		cb(err, devices);
-    });
+
+		return callback(err);
+	});
 };
 
-var apis = function(req, res) {
-	var filename = path.join(process.cwd(), "/static/discovery/devices-v1.json");
-    var fileStream = fs.createReadStream(filename);
-    fileStream.pipe(res);
+/**
+ *
+ * @param {ApplicationModel} application
+ * @param {object} audience
+ * @param {function} callback
+ */
+var getByAudience = function (application, audience, callback) {
+	var conditions = [];
+
+	if (audience.alias) {
+		conditions.push({alias: audience.alias});
+	}
+
+	if (audience.device_token) {
+        if (isCaseInsenseticeToken(audience.device_token)) {
+            audience.device_token = audience.device_token.toUpperCase();
+        }
+
+		conditions.push({token: audience.device_token});
+	}
+
+	if (audience.apid) {
+		conditions.push({_id: audience.apid});
+	}
+
+    if (audience.tags) {
+        conditions.push({tags: audience.tags});
+    }
+
+    DeviceModel.find(
+		{
+			$or: conditions,
+			_application: application._id
+		},
+		function(err, devices) {
+			if (err) {
+				logger.error(util.format('failed to find devices by %s %s', JSON.stringify(audience), err), err);
+			}
+
+			callback(err, devices);
+		}
+	);
 };
 
 module.exports = {
-  put: createDevice,
-  list: listDevices,
-  getByAliasesAndDeviceIds: getByAliasesAndDeviceIds,
-  apis: apis
+	getByAudience: getByAudience,
+	create: createDevice,
+	deactivate: deactivateDevice
 };
