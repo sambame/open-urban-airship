@@ -8,7 +8,7 @@ ENV PATH $PATH:/nodejs/bin
 add package.json /var/www/openurban/package.json
 
 run apt-get -yqq update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -yqq install --no-install-recommends python python-setuptools curl gcc make build-essential openssl && \
+    DEBIAN_FRONTEND=noninteractive apt-get -yqq install --no-install-recommends python python-setuptools curl gcc make build-essential openssl git && \
     easy_install supervisor && \
     echo_supervisord_conf > /etc/supervisord.conf && \
     printf "[include]\nfiles = /var/www/openurban/Supervisorfile.ini\n" >> /etc/supervisord.conf && \
@@ -16,7 +16,7 @@ run apt-get -yqq update && \
     mkdir -p /var/www/openurban && \
     cd /var/www/openurban && \
     npm install --production --no-color --loglevel info && \
-    apt-get -y purge --auto-remove curl gcc make build-essential && \
+    apt-get -y purge --auto-remove curl gcc make build-essential git && \
     apt-get clean autoclean && \
     rm -rf /var/lib/{apt,dpkg,cache,log} && \
     rm -rf /tmp && \
