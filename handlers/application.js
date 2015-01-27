@@ -9,6 +9,7 @@ var ApplicationModel = require("../models/application"),
     crypto = require("crypto"),
     async = require("async"),
     base64url = require('base64url'),
+    validateP12 = require('../validateP12'),
     Application = require('../controllers/application');
 
 var createSecureRandom = function(callback) {
@@ -18,83 +19,138 @@ var createSecureRandom = function(callback) {
 };
 
 var updateApplication = function  (req, res) {
-    var params = req.body;
+    var params = req.body,
+        ios_certificate,
+        pushExpirationDate;
 
     var application = req.user.app;
 
-    if (params.ios_certificate) {
-        application.ios.pfxData = new Buffer(params.ios_certificate, 'base64');
-    }
-
-    if (params.passphrase) {
-        application.ios.passphrase = params.ios_certificate_password;
-    }
-
-    if (params.gcm_api_key) {
-        application.android.gcm_api_key = params.gcm_api_key;
-    }
-
-    if (params.android_package_name) {
-        application.android.android_package_name = params.android_package_name;
-    }
-
-    application.production = !!params.production;
-
-    application.save(function(err) {
-        if (err) {
-            logger.error(util.format("failed to save application"), err);
-            res.status(500);
+    function updateApp() {
+        if (params.ios_certificate) {
+            application.ios.pfxData = ios_certificate;
+            application.ios.pushExpirationDate = pushExpirationDate;
         }
 
-        res.end();
-    });
+        if (params.ios_certificate_password) {
+            application.ios.passphrase = params.ios_certificate_password;
+        }
+
+        if (params.gcm_api_key) {
+            application.android.gcm_api_key = params.gcm_api_key;
+        }
+
+        if (params.android_package_name) {
+            application.android.android_package_name = params.android_package_name;
+        }
+
+        application.production = !!params.production;
+
+        application.save(function (err) {
+            if (err) {
+                logger.error(util.format("failed to save application"), err);
+                res.status(500);
+            }
+
+            res.end();
+        });
+    }
+
+    if (params.ios_certificate) {
+        ios_certificate = new Buffer(params.ios_certificate, 'base64');
+        validateP12(ios_certificate, params.ios_certificate_password || application.ios.passphrase)
+            .then(function (expirationDate) {
+                pushExpirationDate = expirationDate;
+                updateApp();
+            })
+            .catch(function (err) {
+                logger.error(util.format("failed to validate ios certificate: %s", err), err);
+                res.status(500);
+                res.json({
+                    ok: false,
+                    err: err.message
+                })
+            });
+    } else {
+        updateApp();
+    }
 };
 
 var createApplication = function (req, res) {
-    var params = req.body;
-    async.parallel(
-        [
-            createSecureRandom,
-            createSecureRandom,
-            createSecureRandom
-        ],
-        function(err, keys) {
-            Application.create(params.name, !!params.production, keys[0], keys[1], keys[2])
-                .then(function(application) {
-                    if (params.ios_certificate) {
-                        application.ios = {pfxData: new Buffer(params.ios_certificate, 'base64'), passphrase: params.ios_certificate_password};
-                    }
+    var params = req.body,
+        ios_certificate,
+        pushExpirationDate;
 
-                    return application;
-                })
-                .then(function(application) {
-                    if (params.gcm_api_key) {
-                        application.android = {gcm_api_key: params.gcm_api_key, android_package_name: params.android_package_name};
-                    }
+    function createApp() {
+        async.parallel(
+            [
+                createSecureRandom,
+                createSecureRandom,
+                createSecureRandom
+            ],
+            function (err, keys) {
+                Application.create(params.name, !!params.production, keys[0], keys[1], keys[2])
+                    .then(function (application) {
+                        if (params.ios_certificate) {
+                            application.ios = {
+                                pfxData: ios_certificate,
+                                passphrase: params.ios_certificate_password,
+                                pushExpirationDate: pushExpirationDate
+                            };
+                        }
 
-                    return application;
-                })
-                .then(function(application) {
-                    return application.saveQ();
-                })
-                .then(function(application) {
-                    res.json({
-                        ok: true,
-                        master_secret: application.master_secret,
-                        secret: application.secret,
-                        key: application.key
-                    });
-                })
-                .catch(function(err) {
-                    logger.error(util.format("failed to create app %s", err), err);
-                    res.status(500);
-                    res.json({
-                        ok: false,
-                        err: err.message
+                        return application;
                     })
-                });
-        }
-    );
+                    .then(function (application) {
+                        if (params.gcm_api_key) {
+                            application.android = {
+                                gcm_api_key: params.gcm_api_key,
+                                android_package_name: params.android_package_name
+                            };
+                        }
+
+                        return application;
+                    })
+                    .then(function (application) {
+                        return application.saveQ();
+                    })
+                    .then(function (application) {
+                        res.json({
+                            ok: true,
+                            master_secret: application.master_secret,
+                            secret: application.secret,
+                            key: application.key
+                        });
+                    })
+                    .catch(function (err) {
+                        logger.error(util.format("failed to create app %s", err), err);
+                        res.status(500);
+                        res.json({
+                            ok: false,
+                            err: err.message
+                        })
+                    });
+            }
+        );
+    }
+
+    if (params.ios_certificate) {
+        ios_certificate = new Buffer(params.ios_certificate, 'base64');
+        validateP12(ios_certificate, params.ios_certificate_password)
+            .then(function(expirationDate) {
+                pushExpirationDate = expirationDate;
+                createApp();
+            })
+            .catch(function(err) {
+                logger.error(util.format("failed to validate ios certificate %s", err), err);
+                res.status(500);
+                res.json({
+                    ok: false,
+                    err: err.message
+                })
+            });
+    } else {
+        createApp();
+    }
 };
 
 var listApplications = function (req, res) {

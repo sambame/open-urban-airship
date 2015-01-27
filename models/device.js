@@ -13,6 +13,7 @@ var DeviceSchema = new Schema({
     platform: { type: String, required: true, enum: ["ios", "android", "test"]},
     _application: { type: String, ref: 'Application', required: true },
 	active: {type: Boolean, 'default': true},
+    last_deactivation_date: Date,
     tags: [String],
     apid: {type: String, get: function() {return this._id;}},
     "created_at": {type: Date},

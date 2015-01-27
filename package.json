@@ -24,7 +24,9 @@
     "q": "latest",
     "mongoose-q": "latest",
     "kue": "latest",
-    "request": "latest"
+    "request": "latest",
+    "openssl-wrapper": "latest",
+    "moment": "latest"
   },
   "devDependencies": {
     "debug": "latest",

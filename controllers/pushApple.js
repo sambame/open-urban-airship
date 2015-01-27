@@ -4,6 +4,8 @@
 var logger = require("../logger"),
     util = require("util"),
     buildMessage = require("./buildNotification"),
+    DeviceModel = require("../models/device"),
+    moment = require("moment"),
     apn = require("apn");
 
 var	feedbacks = {};
@@ -27,6 +29,24 @@ function getOptions(application) {
     };
 }
 
+function deactivateDevice(apnDevice, time) {
+    var token = apnDevice.toString().toUpperCase(),
+        time = time * 1000;
+
+    return DeviceModel.findOneQ({token: token})
+        .then(function(device) {
+            if (!device) {
+                logger.warn(util.format("got feedback on unknown device %s", token));
+                return;
+            }
+
+            logger.info(util.format("device %s is no longer active", device.alias || device.token));
+            device.active = false;
+            device.last_deactivation_date = new moment(time).toDate();
+            return device.saveQ();
+        });
+}
+
 function createFeedbackIfNeeded(application) {
     if (feedbacks[application.name]) {
         return;
@@ -44,33 +64,22 @@ function createFeedbackIfNeeded(application) {
     var feedback = new apn.Feedback(feedbackOptions);
 
     if (application.production) {
-        feedback.on("feedback", function (devices) {
-            logger.info(util.format("got feedback on %s %s", application.name, JSON.stringify(devices)));
+        feedback.on("feedback", function (devicesAndTimes) {
+            logger.info(util.format("got feedback on %s %s", application.name, JSON.stringify(devicesAndTimes)));
 
-            devices.forEach(function (item) {
-                // Do something with item.device and item.time;
+            devicesAndTimes.forEach(function (deviceAndTime) {
+                deactivateDevice(deviceAndTime.device, deactivateDevice.time);
             });
         });
     } else {
         feedback.on("feedback", function (device, time) {
             logger.info(util.format("got feedback on %s time '%s' '%s'", application.name, device, time));
 
-            Device.find({token: buffer}, function(err, devices) {
-                devices.forEach(function (device) {
-                    logger.debug(util.format("device token %s is now inactive", device));
-                    device.status = "inactive";
-                    device.save(function (err) {
-                        if (err !== null) {
-                            logger.error(util.format("failed to save %s: %s", buffer, err));
-                        }
-                    });
-                });
-            });
+            deactivateDevice(device, time);
         });
     }
 
     logger.debug(util.format("push devices: %s application: %s", application));
-
 
     feedbacks[application.name] = feedback;
 }
@@ -95,5 +104,6 @@ var pushAppleNotification = function(application, device, notification) {
 };
 
 module.exports = {
-    push: pushAppleNotification
+    push: pushAppleNotification,
+    deactivateDevice: deactivateDevice
 };

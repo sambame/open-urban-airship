@@ -9,7 +9,12 @@ var minioc = require("minioc"),
 var push = function(application, audience, notification, callback) {
     Device.getByAudience(application, audience, function (err, devices) {
         if (err) {
+            logger.error(util.format("failed to find audience %s", err), err);
             return callback(err);
+        }
+
+        if (devices.length === 0) {
+            logger.warn(util.format("no device found for %s application key %s", JSON.stringify(audience), application._id));
         }
 
         for (var i=0;i<devices.length;i++) {

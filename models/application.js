@@ -13,7 +13,8 @@ var ApplicationSchema = new Schema({
     production: Boolean,
     ios: {
         pfxData: Buffer,
-        passphrase: String
+        passphrase: String,
+        pushExpirationDate: Date
     },
     android: {
         gcm_api_key: String,

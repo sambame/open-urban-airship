@@ -92,10 +92,10 @@ var deactivateDevice = function(application, token, callback) {
  * @param {function} callback
  */
 var getByAudience = function (application, audience, callback) {
-	var condition = [];
+	var conditions = [];
 
 	if (audience.alias) {
-		condition.push({alias: audience.alias});
+		conditions.push({alias: audience.alias});
 	}
 
 	if (audience.device_token) {
@@ -103,20 +103,20 @@ var getByAudience = function (application, audience, callback) {
             audience.device_token = audience.device_token.toUpperCase();
         }
 
-		condition.push({token: audience.device_token});
+		conditions.push({token: audience.device_token});
 	}
 
 	if (audience.apid) {
-		condition.push({_id: audience.apid});
+		conditions.push({_id: audience.apid});
 	}
 
     if (audience.tags) {
-        condition.push({tags: audience.tags});
+        conditions.push({tags: audience.tags});
     }
 
     DeviceModel.find(
 		{
-			$or: condition,
+			$or: conditions,
 			_application: application._id
 		},
 		function(err, devices) {
