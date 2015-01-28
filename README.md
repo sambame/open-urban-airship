@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/sambame/open-urban-airship.svg?branch=feature%2Fv1)](https://travis-ci.org/sambame/open-urban-airship)
+[![Build Status](https://travis-ci.org/sambame/open-urban-airship.svg)](https://travis-ci.org/sambame/open-urban-airship)
 [![Coverage Status](https://coveralls.io/repos/sambame/open-urban-airship/badge.svg)](https://coveralls.io/r/sambame/open-urban-airship)
 
 This is an open implmenation of the Urban [Airship REST API](https://docs.urbanairship.com/display/DOCS/Server%3A+iOS+Push+API) for pushing notifications to iOS devices.
