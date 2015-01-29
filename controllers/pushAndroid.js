@@ -17,7 +17,7 @@ var checkIfUninstall = function(results) {
     if (!results) {
         return false;
     }
-    
+
     for (var i=0;i<results.length;i++) {
         var currentResult = results[i];
 
@@ -53,14 +53,14 @@ var pushAndroidNotification = function(application, device, notification) {
         registrationIds = [device.token];
 
     sender.send(message, registrationIds, retryCount, function (err, result) {
-        if (err) {
-            logger.error(util.format("failed to send push: %s %s %s", device.token, device.alias, err));
-        } else if (result && result.failure) {
+        if (result && result.failure) {
             if (checkIfUninstall(result.results)) {
                 deactivateDevice(device);
             } else {
                 logger.error(util.format("failed to send push %s %s %s %s", device.token, device.alias, err, JSON.stringify(result)));
             }
+        } else if (err) {
+            logger.error(util.format("failed to send push: %s %s %s", device.token, device.alias, err));
         } else {
             logger.info(util.format("finish sending %s", JSON.stringify(result)))
         }

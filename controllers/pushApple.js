@@ -8,10 +8,20 @@ var logger = require("../logger"),
     moment = require("moment"),
     apn = require("apn");
 
-var	feedbacks = {};
+var	feedbacks = {},
+    connections = {};
 
-function onError(err, notification) {
-    logger.error(util.format("Failed to send notification %s", err));
+function onError(application) {
+    return function(err, notification) {
+        if (err == 10) {
+            logging.warn(util.format("got shutdown from APN for application %s", application.key));
+            delete feedbacks[application.key];
+            delete connections[application.key];
+            return;
+        }
+
+        logger.error(util.format("Failed to send notification %s (%s)", apn.error[err], err));
+    }
 }
 
 function getEndpoint(production) {
@@ -25,7 +35,7 @@ function getOptions(application) {
         gateway: getEndpoint(application.production),
         port: 2195,
         enhanced: true,
-        errorCallback: onError
+        errorCallback: onError(application)
     };
 }
 
@@ -48,7 +58,7 @@ function deactivateDevice(apnDevice, time) {
 }
 
 function createFeedbackIfNeeded(application) {
-    if (feedbacks[application.name]) {
+    if (feedbacks[application.key]) {
         return;
     }
 
@@ -81,7 +91,25 @@ function createFeedbackIfNeeded(application) {
 
     logger.debug(util.format("push devices: %s application: %s", application));
 
-    feedbacks[application.name] = feedback;
+    feedbacks[application.key] = feedback;
+}
+
+/**
+ *
+ * @param {ApplicationModel} application
+ * @returns apn.Connection
+ */
+
+function createConnectionIfNeeded(application) {
+    if (!connections[application.key]) {
+        var options = getOptions(application);
+
+        logger.info(util.format("connection options %s", JSON.stringify(options)));
+
+        connections[application.key] = new apn.Connection(options)
+    }
+
+    return connections[application.key];
 }
 
 /**
@@ -93,11 +121,7 @@ function createFeedbackIfNeeded(application) {
 var pushAppleNotification = function(application, device, notification) {
     createFeedbackIfNeeded(application);
 
-    var options = getOptions(application);
-
-    logger.debug(util.format("connection options %s", JSON.stringify(options)));
-
-    var apnsConnection = new apn.Connection(options),
+    var apnsConnection = createConnectionIfNeeded(application),
         message = buildMessage(notification, "ios", "payload", apn.Notification);
 
     apnsConnection.pushNotification(message, new apn.Device(device.token));
