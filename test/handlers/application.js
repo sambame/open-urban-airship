@@ -23,21 +23,24 @@ describe("application", function() {
     beforeEach(function (done) {
         this.sinon = sinon.sandbox.create();
 
-        mongoose.connect("mongodb://localhost/test_urban");
         mongoose.connection.once("open", function () {
             mongoose.connection.db.dropDatabase(done);
         });
+
+        mongoose.connect("mongodb://localhost/test_urban");
     });
 
     afterEach(function (done) {
         var that = this;
 
-        mongoose.disconnect(function () {
+        mongoose.connection.once("close", function () {
             that.sinon.verify();
             that.sinon.restore();
 
             done();
         });
+
+        mongoose.disconnect();
     });
 
     it("registers new application", function(done) {
