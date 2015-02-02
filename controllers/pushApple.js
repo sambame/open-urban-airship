@@ -11,19 +11,6 @@ var logger = require("../logger"),
 var	feedbacks = {},
     connections = {};
 
-function onError(application) {
-    return function(err, notification) {
-        if (err == 10) {
-            logging.warn(util.format("got shutdown from APN for application %s", application.key));
-            delete feedbacks[application.key];
-            delete connections[application.key];
-            return;
-        }
-
-        logger.error(util.format("Failed to send notification %s (%s)", apn.error[err], err));
-    }
-}
-
 function getEndpoint(production) {
     return production ? "gateway.push.apple.com" : "gateway.sandbox.push.apple.com";
 }
@@ -34,8 +21,7 @@ function getOptions(application) {
         passphrase: application.ios.passphrase,
         gateway: getEndpoint(application.production),
         port: 2195,
-        enhanced: true,
-        errorCallback: onError(application)
+        enhanced: true
     };
 }
 
@@ -94,6 +80,41 @@ function createFeedbackIfNeeded(application) {
     feedbacks[application.key] = feedback;
 }
 
+function wireService(application, service) {
+    if (!application.production) {
+        service.on('transmitted', function (notification, device) {
+            logger.info(util.format("%s notification transmitted to: %s", application.name, device.token.toString('hex')));
+        });
+    }
+
+    service.on('transmissionError', function (errCode, notification, device) {
+        logger.error("%s notification caused error: %s for device %s %s", application.name, errCode, device, notification);
+        if (errCode === 8) {
+            logger.error("A error code of 8 indicates that the device token is invalid. This could be for a number of reasons - are you using the correct environment? i.e. Production vs. Sandbox");
+        }
+
+        if (err == 10) {
+            logging.warn(util.format("%s got shutdown from APN", application.name));
+            delete feedbacks[application.key];
+            delete connections[application.key];
+        }
+    });
+
+    service.on('timeout', function () {
+        logger.warn(util.format("%s connection Timeout", application.name));
+    });
+
+    service.on('disconnected', function () {
+        logger.warn(util.format("%s disconnected from APNS", application.name));
+    });
+
+    service.on('socketError',  function (err) {
+        logger.warn(util.format("%s socket error %s", application.name, err), err);
+    });
+
+    return service;
+}
+
 /**
  *
  * @param {ApplicationModel} application
@@ -106,7 +127,7 @@ function createConnectionIfNeeded(application) {
 
         logger.info(util.format("connection options %s", JSON.stringify(options)));
 
-        connections[application.key] = new apn.Connection(options)
+        connections[application.key] = wireService(application, new apn.Connection(options));
     }
 
     return connections[application.key];

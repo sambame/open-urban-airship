@@ -22,7 +22,10 @@ var push = function (req, res) {
 
 	Push.push(req.user.app, req.body.audience, req.body.notification, function(err, devices) {
  		if (err) {
-			return res.status(500).end();
+            return res.status(500).json({
+                "ok": false,
+                "message": err.message
+            });
 		}
 
 		res.json({

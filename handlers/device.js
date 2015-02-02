@@ -37,25 +37,34 @@ var createDevice = function (req, res) {
 
     logger.info(util.format("createDevice %s", JSON.stringify(req.body)));
 
-    if (!req.body.platform || typeof req.body.platform !== "string") {
+    var platform = req.body.platform;
+    if (platform && typeof platform !== "string") {
         return res.status(400).end();
     }
 
-    req.body.platform = req.body.platform.toLowerCase();
+    if (!platform) {
+        if (req.params.token.length === 64) {
+            platform = "ios"
+        } else {
+            platform = "android"
+        }
+    }
 
-    if (supportedPlatforms.indexOf(req.body.platform) === -1) {
+    platform = platform.toLowerCase();
+
+    if (supportedPlatforms.indexOf(platform) === -1) {
         return res.status(400).end();
     }
 
     var deviceToken = req.params.token;
 
-    if (req.body.platform === "ios") {
+    if (platform === "ios") {
         deviceToken = deviceToken.toLowerCase();
     }
 
     var params = req.body;
 
-    Device.create(req.user.app, params.platform, deviceToken, params.alias, params.tags, function(err, device) {
+    Device.create(req.user.app, platform, deviceToken, params.alias, params.tags, function(err, device) {
         if (err) {
             logger.error(util.format("failed to look for device %s", err));
             return res.status(500).json({ok: false});
