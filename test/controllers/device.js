@@ -7,7 +7,9 @@ var mongoose = require("mongoose"),
     sinon = require("sinon"),
     async = require("async"),
     Application = require("../../controllers/application"),
+    Q = require('q'),
     Device = require("../../controllers/device");
+
 
 describe("device", function() {
     var applicationName = "applicationName",
@@ -15,6 +17,13 @@ describe("device", function() {
         applicationSecret = "applicationSecret",
         applicationMasterSecret = "applicationMasterSecret",
         deviceToken = "deviceToken",
+
+
+        applicationName2 = "applicationName2",
+        applicationKey2 = "applicationKey2",
+        applicationSecret2 = "applicationSecret2",
+        applicationMasterSecret2 = "applicationMasterSecret2",
+
         veryLongDeviceToken = "AAAAAAA0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789aaaaaaaaa",
         deviceToken1 = "deviceToken1",
         deviceToken2 = "deviceToken2",
@@ -42,6 +51,40 @@ describe("device", function() {
         });
 
         mongoose.disconnect();
+    });
+
+    it("getAudience two apps same alias", function(done) {
+        Q.all(
+            [
+                Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret),
+                Application.create(applicationName2, true, applicationKey2, applicationMasterSecret2, applicationSecret2)
+            ])
+            .then(function(applications) {
+                return Device.create(applications[0], devicePlatform, deviceToken, deviceAlias, null)
+                    .then(function() {
+                        return Device.create(applications[1], devicePlatform, deviceToken2, deviceAlias, null);
+                    })
+                    .then(function() {
+                        return Device.getByAudience(applications[0], {alias: deviceAlias})
+                    })
+                    .then(function(devices) {
+                        should.exists(devices);
+                        devices.length.should.equal(1);
+                        devices[0].token.should.equal(deviceToken.toUpperCase());
+                    })
+                    .then(function() {
+                        return Device.getByAudience(applications[1], {alias: deviceAlias});
+                    })
+                    .then(function(devices) {
+                        should.exists(devices);
+                        devices.length.should.equal(1);
+                        devices[0].token.should.equal(deviceToken2.toUpperCase());
+                    });
+                })
+            .then(done)
+            .catch(function(err) {
+                done(err);
+            });
     });
 
     it("getAudience (token)", function(done) {

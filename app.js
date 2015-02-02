@@ -19,12 +19,7 @@ var express = require('express'),
     errorHandler = require("errorhandler"),
     passport = require("passport");
 
-var app = module.exports = express(),
-    mongoUri = process.env.MONGOLAB_URI || process.argv[2] || "mongodb://localhost/openurban";
-
-mongoose.connect(mongoUri);
-
-logger.info("mongodb: " + mongoUri);
+var app = module.exports = express();
 
 app.map = function (a, route) {
     route = route || "";

@@ -88,13 +88,13 @@ function wireService(application, service) {
     }
 
     service.on('transmissionError', function (errCode, notification, device) {
-        logger.error("%s notification caused error: %s for device %s %s", application.name, errCode, device, notification);
+        logger.error(util.format("%s notification caused error: %s for device %s %s", application.name, errCode, device, notification), notification);
         if (errCode === 8) {
             logger.error("A error code of 8 indicates that the device token is invalid. This could be for a number of reasons - are you using the correct environment? i.e. Production vs. Sandbox");
         }
 
-        if (err == 10) {
-            logging.warn(util.format("%s got shutdown from APN", application.name));
+        if (errCode == 10) {
+            logger.warn(util.format("%s got shutdown from APN", application.name));
             delete feedbacks[application.key];
             delete connections[application.key];
         }

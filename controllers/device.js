@@ -19,7 +19,7 @@ function isCaseInsenseticeToken(token) {
  * @param {string} token
  * @param {string} alias
  * @param {Array} tags
- * @param {function} callback
+ * @param {function} [callback]
  */
 var createDevice = function(application, platform, token, alias, tags, callback) {
 	if (isCaseInsenseticeToken(token)) {
@@ -89,7 +89,7 @@ var deactivateDevice = function(application, token, callback) {
  *
  * @param {ApplicationModel} application
  * @param {object} audience
- * @param {function} callback
+ * @param {function} [callback]
  */
 var getByAudience = function (application, audience, callback) {
 	var conditions = [];
@@ -114,19 +114,27 @@ var getByAudience = function (application, audience, callback) {
         conditions.push({tags: audience.tags});
     }
 
-    DeviceModel.find(
-		{
-			$or: conditions,
-			_application: application._id
-		},
-		function(err, devices) {
-			if (err) {
-				logger.error(util.format('failed to find devices by %s %s', JSON.stringify(audience), err), err);
-			}
+    var condition = {
+        $and: [
+            {$or: conditions},
+            {_application: application._id}
+        ]
+    };
 
-			callback(err, devices);
-		}
-	);
+    if (callback) {
+        DeviceModel.find(
+            condition,
+            function (err, devices) {
+                if (err) {
+                    logger.error(util.format('failed to find devices by %s %s', JSON.stringify(audience), err), err);
+                }
+
+                callback(err, devices);
+            }
+        );
+    } else {
+        return DeviceModel.findQ(condition);
+    }
 };
 
 module.exports = {
