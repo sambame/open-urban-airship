@@ -59,27 +59,24 @@ describe("device", function() {
                 return application.saveQ();
             })
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function(device) {
+                        request(app)
+                            .post("/api/push/")
+                            .auth(applicationKey, applicationMasterSecret)
+                            .send({audience: {device_token: device.token}, notification: {alert: "test"}})
+                            .expect(200)
+                            .end(function (err, res) {
+                                should.exist(res);
+                                pushSpy.called.should.be.true;
 
-                    request(app)
-                        .post("/api/push/")
-                        .auth(applicationKey, applicationMasterSecret)
-                        .send({audience: {device_token: device.token}, notification: {alert: "test"}})
-                        .expect(200)
-                        .end(function (err, res) {
-                            should.not.exists(err);
-                            should.exist(res);
-                            pushSpy.called.should.be.true;
-
-                            done();
-                        }
-                    );
-                });
+                                done(err);
+                            }
+                        );
+                    })
             })
-            .catch(function() {
-                should.not.exists(err);
+            .catch(function(err) {
+                done(err);
             });
     });
 
@@ -97,27 +94,24 @@ describe("device", function() {
                 return application.saveQ();
             })
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function(device) {
+                        request(app)
+                            .post("/api/push/")
+                            .auth(applicationKey, applicationMasterSecret)
+                            .send({audience: {apid: device.apid}, notification: {alert: "test"}})
+                            .expect(200)
+                            .end(function (err, res) {
+                                should.exist(res);
+                                pushSpy.calledOnce.should.be.true;
 
-                    request(app)
-                        .post("/api/push/")
-                        .auth(applicationKey, applicationMasterSecret)
-                        .send({audience: {apid: device.apid}, notification: {alert: "test"}})
-                        .expect(200)
-                        .end(function (err, res) {
-                            should.not.exists(err);
-                            should.exist(res);
-                            pushSpy.calledOnce.should.be.true;
-
-                            done();
-                        }
-                    );
-                });
+                                done(err);
+                            }
+                        );
+                    });
             })
-            .catch(function() {
-                should.not.exists(err);
+            .catch(function(err) {
+                done(err);
             });
     });
 
@@ -135,27 +129,25 @@ describe("device", function() {
                 return application.saveQ();
             })
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, deviceAlias, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
+                    .then(function(device) {
+                        request(app)
+                            .post("/api/push/")
+                            .auth(applicationKey, applicationMasterSecret)
+                            .send({audience: {alias: device.alias}, notification: {alert: "test"}})
+                            .expect(200)
+                            .end(function (err, res) {
+                                should.exist(res);
+                                pushSpy.calledOnce.should.be.true;
 
-                    request(app)
-                        .post("/api/push/")
-                        .auth(applicationKey, applicationMasterSecret)
-                        .send({audience: {alias: device.alias}, notification: {alert: "test"}})
-                        .expect(200)
-                        .end(function (err, res) {
-                            should.not.exists(err);
-                            should.exist(res);
-                            pushSpy.calledOnce.should.be.true;
+                                done(err);
+                            }
+                        );
+                    });
 
-                            done();
-                        }
-                    );
-                });
             })
-            .catch(function() {
-                should.not.exists(err);
+            .catch(function(err) {
+                done(err);
             });
     });
 
@@ -173,10 +165,10 @@ describe("device", function() {
                 return application.saveQ();
             })
             .then(function() {
-                return Device.create(applicationKey, devicePlatform, deviceToken1, deviceAlias, null);
+                return Device.createOrUpdate(applicationKey, null, devicePlatform, deviceToken1, deviceAlias);
             })
             .then(function() {
-                return Device.create(applicationKey, devicePlatform, deviceToken2, deviceAlias, null);
+                return Device.createOrUpdate(applicationKey, null, devicePlatform, deviceToken2, deviceAlias);
             }).
             then(function() {
                 request(app)
@@ -185,11 +177,10 @@ describe("device", function() {
                     .send({audience: {alias: deviceAlias}, notification: {alert: "test"}})
                     .expect(200)
                     .end(function (err, res) {
-                        should.not.exists(err);
                         should.exist(res);
                         pushSpy.calledTwice.should.be.true;
 
-                        done();
+                        done(err);
                     }
                 );
             })

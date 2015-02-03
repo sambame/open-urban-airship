@@ -154,6 +154,10 @@ app.map({
             put: [authenticate(), device.put],
             "delete": [authenticate(), device["delete"]]
         },
+        '/apids/:apid': {
+            put: [authenticate(), device.put],
+            "delete": [authenticate(), device["delete"]]
+        },
         '/device_tokens/': {
             get: [authenticate(), device.list]
         },

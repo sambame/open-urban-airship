@@ -2,27 +2,30 @@
 /*eslint-env node */
 "use strict";
 var DeviceModel = require("../models/device"),
-	logger = require("../logger"),
-	util = require("util");
+	logger = require("../logger");
 
 var iosTokenLength = 64,
     apidTokenLength = 36;
 
-function isCaseInsenseticeToken(token) {
+function isCaseInsensitiveToken(token) {
+    if (!token) {
+        return false;
+    }
+
     return token.length <= iosTokenLength;
 }
 
 /**
  *
  * @param {String|ApplicationModel} application
+ * @param {string} apid
  * @param {string} platform
  * @param {string} token
- * @param {string} alias
- * @param {Array} tags
- * @param {function} [callback]
+ * @param {string} [alias]
+ * @param {Array} [tags]
  */
-var createDevice = function(application, platform, token, alias, tags, callback) {
-	if (isCaseInsenseticeToken(token)) {
+var createOrUpdateDevice = function(application, apid, platform, token, alias, tags) {
+	if (isCaseInsensitiveToken(token)) {
         token = token.toUpperCase();
     }
 
@@ -33,65 +36,58 @@ var createDevice = function(application, platform, token, alias, tags, callback)
             device._application =  application._id || application;
         }
 
-        device.platform = platform;
-        device.alias = alias;
+        if (platform) {
+            device.platform = platform;
+        }
+
+        if (alias) {
+            device.alias = alias;
+        }
+
+        if (tags) {
+            device.tags = tags;
+        }
+
         device.active = true;
-        device.tags = tags;
 
         return device;
     }
 
-    if (!callback) {
-        return DeviceModel.findOneQ({token: token, _application: application._id})
-            .then(function(device) {
-                return createOrUpdate(device).saveQ();
-            });
+    var findQ = null;
+    if (apid) {
+        findQ = DeviceModel.findOneQ({_id: apid, _application: application._id})
     } else {
-        DeviceModel.findOne({token: token, _application: application._id}, function (err, device) {
-            if (err) {
-                logger.error(util.format("failed to look for device %s", err));
-                return callback(err);
-            }
-
-            createOrUpdate(device).save(function (err, device) {
-                if (err) {
-                    logger.error(util.format("failed to save device %s", err), err);
-                }
-
-                callback(err, device);
-            });
-        });
+        findQ = DeviceModel.findOneQ({token: token, _application: application._id})
     }
+
+    return findQ.then(function(device) {
+            return createOrUpdate(device).saveQ();
+        });
 };
 
 /**
  *
  * @param {ApplicationModel} application
- * @param {string} token
- * @param {function} callback
+ * @param {string} apid
+ * @param {string} [token]
  */
-var deactivateDevice = function(application, token, callback) {
-    if (isCaseInsenseticeToken(token)) {
+var deactivateDevice = function(application, apid, token) {
+    if (token && isCaseInsensitiveToken(token)) {
         token = token.toUpperCase();
     }
 
-	DeviceModel.update({token: token, _application: application._id}, {$set: {active: false}}, function (err) {
-		if (err) {
-			logger.error(util.format("failed to look for device %s", err));
+    var conditions = apid ? {_id: apid} : {token: token};
+    conditions._application = application._id;
 
-		}
-
-		return callback(err);
-	});
+	return DeviceModel.updateQ(conditions, {$set: {active: false}});
 };
 
 /**
  *
  * @param {ApplicationModel} application
  * @param {object} audience
- * @param {function} [callback]
  */
-var getByAudience = function (application, audience, callback) {
+var getByAudience = function (application, audience) {
 	var conditions = [];
 
 	if (audience.alias) {
@@ -99,7 +95,7 @@ var getByAudience = function (application, audience, callback) {
 	}
 
 	if (audience.device_token) {
-        if (isCaseInsenseticeToken(audience.device_token)) {
+        if (isCaseInsensitiveToken(audience.device_token)) {
             audience.device_token = audience.device_token.toUpperCase();
         }
 
@@ -121,24 +117,11 @@ var getByAudience = function (application, audience, callback) {
         ]
     };
 
-    if (callback) {
-        DeviceModel.find(
-            condition,
-            function (err, devices) {
-                if (err) {
-                    logger.error(util.format('failed to find devices by %s %s', JSON.stringify(audience), err), err);
-                }
-
-                callback(err, devices);
-            }
-        );
-    } else {
-        return DeviceModel.findQ(condition);
-    }
+    return DeviceModel.findQ(condition);
 };
 
 module.exports = {
 	getByAudience: getByAudience,
-	create: createDevice,
+	createOrUpdate: createOrUpdateDevice,
 	deactivate: deactivateDevice
 };

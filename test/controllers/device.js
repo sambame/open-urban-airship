@@ -60,9 +60,9 @@ describe("device", function() {
                 Application.create(applicationName2, true, applicationKey2, applicationMasterSecret2, applicationSecret2)
             ])
             .then(function(applications) {
-                return Device.create(applications[0], devicePlatform, deviceToken, deviceAlias, null)
+                return Device.createOrUpdate(applications[0], null, devicePlatform, deviceToken, deviceAlias)
                     .then(function() {
-                        return Device.create(applications[1], devicePlatform, deviceToken2, deviceAlias, null);
+                        return Device.createOrUpdate(applications[1], null, devicePlatform, deviceToken2, deviceAlias);
                     })
                     .then(function() {
                         return Device.getByAudience(applications[0], {alias: deviceAlias})
@@ -90,163 +90,186 @@ describe("device", function() {
     it("getAudience (token)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
-
-                    Device.getByAudience(application, {device_token: deviceToken}, function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
-                        devices.length.should.equal(1);
-
-                        done();
-                    });
-                });
-            })
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function() {
+                        return Device.getByAudience(application, {device_token: deviceToken})
+                            .then(function(devices) {
+                                devices.length.should.equal(1);
+                            })
+                        });
+                })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
+                done(err);
             });
     });
 
     it("getAudience (token case insensitive)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
-
-                    Device.getByAudience(application, {device_token: deviceToken.toLowerCase()}, function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function() {
+                        return Device.getByAudience(application, {device_token: deviceToken.toLowerCase()});
+                    })
+                    .then(function(devices) {
                         devices.length.should.equal(1);
-
-                        done();
-                    });
-                });
-            })
+                    })
+                })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
+                done(err);
             });
     });
 
     it("getAudience (token case insensitive should not work)", function(done) {
+        veryLongDeviceToken.should.not.equal(veryLongDeviceToken.toLowerCase());
+        veryLongDeviceToken.should.not.equal(veryLongDeviceToken.toUpperCase());
+
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, veryLongDeviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
-
-                    veryLongDeviceToken.should.not.equal(veryLongDeviceToken.toLowerCase());
-                    veryLongDeviceToken.should.not.equal(veryLongDeviceToken.toUpperCase());
-
-                    Device.getByAudience(application, {device_token: veryLongDeviceToken.toLowerCase()}, function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
+                Device.createOrUpdate(application, null, devicePlatform, veryLongDeviceToken)
+                    .then(function() {
+                        return Device.getByAudience(application, {device_token: veryLongDeviceToken.toLowerCase()});
+                    })
+                    .then(function(devices) {
                         devices.length.should.equal(0);
-
-                        done();
                     });
-                });
-            })
+                })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
+                done(err);
             });
     });
 
     it("getAudience (token long)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, veryLongDeviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
-
-                    Device.getByAudience(application, {device_token: veryLongDeviceToken}, function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
+                Device.createOrUpdate(application, null, devicePlatform, veryLongDeviceToken)
+                    .then(function() {
+                        return Device.getByAudience(application, {device_token: veryLongDeviceToken});
+                    })
+                    .then(function(devices) {
                         devices.length.should.equal(1);
-
-                        done();
                     });
-                });
-            })
+                })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
+                done(err);
             });
     });
 
     it("getAudience (apid)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, null, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
-
-                    Device.getByAudience(application, {apid: device.apid}, function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
+                Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function(device) {
+                        return Device.getByAudience(application, {apid: device.apid});
+                    })
+                    .then(function(devices) {
                         devices.length.should.equal(1);
-
-                        done();
                     });
-                });
-            })
+                })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
+                done(err);
             });
     });
 
     it("getAudience (alias)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                Device.create(application, devicePlatform, deviceToken, deviceAlias, null, function(err, device) {
-                    should.not.exists(err);
-                    should.exists(device);
-
-                    Device.getByAudience(application, {alias: device.alias}, function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
+                    .then(function(device) {
+                        return Device.getByAudience(application, {alias: device.alias})
+                    })
+                    .then(function(devices) {
                         devices.length.should.equal(1);
-
-                        done();
                     });
-                });
-            })
+                })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
+                done(err);
             });
     });
 
     it("getAudience (alias multi)", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                async.waterfall(
+                return Q.all(
                     [
-                        function(callback) {
-                            Device.create(application, devicePlatform, deviceToken1, deviceAlias, null, function(err) {
-                                callback(err);
-                            });
-                        },
-                        function(callback) {
-                            Device.create(application, devicePlatform, deviceToken2, deviceAlias, null, function(err) {
-                                callback(err);
-                            });
-                        },
-                        function(callback) {
-                            Device.getByAudience(application, {alias: deviceAlias}, callback);
-                        }
-                    ],
-                    function(err, devices) {
-                        should.not.exists(err);
-                        should.exists(devices);
-                        devices.length.should.equal(2);
-
-                        done();
-                    }
-                );
+                        Device.createOrUpdate(application, null, devicePlatform, deviceToken1, deviceAlias),
+                        Device.createOrUpdate(application, null, devicePlatform, deviceToken2, deviceAlias)
+                    ])
+                    .then(function () {
+                        return application;
+                    })
             })
+            .then(function(application) {
+                return Device.getByAudience(application, {alias: deviceAlias});
+            })
+            .then(function(devices) {
+                devices.length.should.equal(2);
+            })
+            .then(done)
             .catch(function(err) {
-                should.not.exists(err);
                 done(err);
             });
     });
+
+    it("delete (token)", function(done) {
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function (device) {
+                        return Device.getByAudience(application, {device_token: deviceToken})
+                            .then(function (devices) {
+                                devices.length.should.equal(1);
+                                devices[0].active.should.be.true;
+                            })
+                            .then(function () {
+                                return Device.deactivate(application, null, device.token)
+                            })
+                            .then(function () {
+                                Device.getByAudience(application, {device_token: deviceToken})
+                                    .then(function (devices) {
+                                        devices.length.should.equal(1);
+                                        devices[0].active.should.be.false;
+                                    })
+                            });
+                    })
+                })
+            .then(done)
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
+    it("delete (apid)", function(done) {
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
+                    .then(function (device) {
+                        return Device.getByAudience(application, {apid: device.apid})
+                            .then(function (devices) {
+                                devices.length.should.equal(1);
+                                devices[0].active.should.be.true;
+                            })
+                            .then(function () {
+                                return Device.deactivate(application, device.apid)
+                            })
+                            .then(function () {
+                                Device.getByAudience(application, {apid: device.apid})
+                                    .then(function (devices) {
+                                        devices.length.should.equal(1);
+                                        devices[0].active.should.be.false;
+                                    })
+                            });
+                    })
+            })
+            .then(done)
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
 });

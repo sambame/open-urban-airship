@@ -6,32 +6,34 @@ var minioc = require("minioc"),
     util = require("util"),
     Device = require("./device");
 
-var push = function(application, audience, notification, callback) {
-    Device.getByAudience(application, audience, function (err, devices) {
-        if (err) {
-            logger.error(util.format("failed to find audience %s", err), err);
-            return callback(err);
-        }
-
-        if (devices.length === 0) {
-            logger.warn(util.format("no device found for %s application key %s", JSON.stringify(audience), application._id));
-        }
-
-        for (var i=0;i<devices.length;i++) {
-            var currentDevice = devices[i];
-
-            if (!currentDevice.active) {
-                logger.info(util.format("device %s is not active (alias: %s)", currentDevice.token, currentDevice.alias));
-                continue;
+var push = function(application, audience, notification) {
+    return Device.getByAudience(application, audience)
+        .then(function(devices) {
+            if (devices.length === 0) {
+                logger.warn(util.format("no device found for %s application key %s", JSON.stringify(audience), application._id));
             }
 
-            minioc.get("push-" + currentDevice.platform).push(application, currentDevice, notification);
+            var inactiveDevices = [],
+                activeDevices = [];
 
-            logger.info(util.format("%s: sending push notification %s to %s alias %s", application.name, JSON.stringify(notification), devices[i].apid, devices[i].alias || "(not defined)"));
-        }
+            for (var i=0;i<devices.length;i++) {
+                var currentDevice = devices[i];
 
-        callback(null, devices);
-    });
+                if (!currentDevice.active) {
+                    inactiveDevices.push(currentDevice);
+                    logger.info(util.format("device %s is not active (alias: %s)", currentDevice.token, currentDevice.alias));
+                    continue;
+                }
+
+                activeDevices.push(currentDevice);
+
+                minioc.get("push-" + currentDevice.platform).push(application, currentDevice, notification);
+
+                logger.info(util.format("%s: sending push notification %s to %s alias %s", application.name, JSON.stringify(notification), devices[i].apid, devices[i].alias || "(not defined)"));
+            }
+
+            return [activeDevices, inactiveDevices]
+        });
 };
 
 minioc.register("push-ios").as.singleton.factory(function() {

@@ -10,28 +10,28 @@ var DeviceModel = require("../models/device"),
 var supportedPlatforms = ["ios", "android", "test"];
 
 var deleteDevice = function (req, res) {
-    if (!req.params.token) {
+    if (!req.params.token && !req.params.apid) {
         return res.status(400).end();
     }
 
     logger.info(util.format("deleteDevice %s", JSON.stringify(req.body)));
 
-    var deviceToken = req.params.token;
-
-    Device.deactivate(req.user.app, deviceToken, function(err) {
-        if (err) {
+    Device.deactivate(req.user.app, req.params.apid, req.params.token)
+        .then(function() {
+            res.status(204).json({
+                ok: true
+            });
+        })
+        .catch(function(err) {
             logger.error(util.format("failed to deactivate device %s", err));
-            return res.status(500).json({ok: false});
-        }
-
-        res.status(204).json({
-            ok: true
+            return res.status(500).json({
+                ok: false
+            });
         });
-    });
 };
 
 var createDevice = function (req, res) {
-    if (!req.params.token) {
+    if (!req.params.token && !req.params.apid) {
         return res.status(400).end();
     }
 
@@ -42,7 +42,11 @@ var createDevice = function (req, res) {
         return res.status(400).end();
     }
 
-    if (!platform) {
+    var apid = req.params.apid,
+        isAPID = !!apid,
+        deviceToken = isAPID ? req.body.params : req.params.token;
+
+    if (!platform && !isAPID) {
         if (req.params.token.length === 64) {
             platform = "ios"
         } else {
@@ -50,31 +54,35 @@ var createDevice = function (req, res) {
         }
     }
 
-    platform = platform.toLowerCase();
+    if (platform) {
+        platform = platform.toLowerCase();
 
-    if (supportedPlatforms.indexOf(platform) === -1) {
-        return res.status(400).end();
+        if (supportedPlatforms.indexOf(platform) === -1) {
+            return res.status(400).end();
+        }
     }
 
-    var deviceToken = req.params.token;
 
-    if (platform === "ios") {
+    if (deviceToken && platform === "ios") {
         deviceToken = deviceToken.toLowerCase();
     }
 
     var params = req.body;
 
-    Device.create(req.user.app, platform, deviceToken, params.alias, params.tags, function(err, device) {
-        if (err) {
-            logger.error(util.format("failed to look for device %s", err));
-            return res.status(500).json({ok: false});
-        }
-
-        res.json({
-            ok: true,
-            apid: device.apid
+    Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags)
+        .then(function(device) {
+            res.json({
+                ok: true,
+                apid: device.apid
+            });
+        })
+        .catch(function(err) {
+            logger.error(util.format("failed to look for device %s", err)), err;
+            return res.status(500).json({
+                message: err.message,
+                ok: false
+            });
         });
-    });
 };
 
 var listDevices = function (req, res) {
