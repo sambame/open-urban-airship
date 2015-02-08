@@ -5,7 +5,6 @@
 var mongoose = require("mongoose"),
     should = require("should"),
     sinon = require("sinon"),
-    async = require("async"),
     Application = require("../../controllers/application"),
     pushApple = require("../../controllers/pushApple"),
     apn = require("apn"),
@@ -47,18 +46,18 @@ describe("apn Feedback", function() {
     it("test simple Feedback", function(done) {
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                return Device.createOrUpdate(application, null, "ios", "af4c5dc2aa94184b6ec953f43ad9374eb675019ac18a09cbe2f136ae0bc9");
+                return Device.createOrUpdate(application, null, "ios", "af4c5dc2aa94184b6ec953f43ad9374eb675019ac18a09cbe2f136ae0bc9")
+                    .then(function(device) {
+                        should.not.exist(device.last_deactivation_date);
+                        var apnDevice = new apn.Device("af4c5dc2aa94184b6ec953f43ad9374eb675019ac18a09cbe2f136ae0bc9");
+                        return pushApple.deactivateDevice(application, apnDevice, 1422327083);
+                    })
+                    .then(function(device) {
+                        should.exist(device);
+                        should.exist(device.last_deactivation_date);
+                    });
             })
-            .then(function(device) {
-                should.not.exist(device.last_deactivation_date);
-                var apnDevice = new apn.Device("af4c5dc2aa94184b6ec953f43ad9374eb675019ac18a09cbe2f136ae0bc9");
-                return pushApple.deactivateDevice(apnDevice, 1422327083);
-            })
-            .then(function(device) {
-                should.exist(device);
-                should.exist(device.last_deactivation_date);
-            }).
-            then(done)
+            .then(done)
             .catch(function(err) {
                 done(err);
             });

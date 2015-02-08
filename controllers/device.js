@@ -4,17 +4,6 @@
 var DeviceModel = require("../models/device"),
 	logger = require("../logger");
 
-var iosTokenLength = 64,
-    apidTokenLength = 36;
-
-function isCaseInsensitiveToken(token) {
-    if (!token) {
-        return false;
-    }
-
-    return token.length <= iosTokenLength;
-}
-
 /**
  *
  * @param {String|ApplicationModel} application
@@ -25,7 +14,7 @@ function isCaseInsensitiveToken(token) {
  * @param {Array} [tags]
  */
 var createOrUpdateDevice = function(application, apid, platform, token, alias, tags) {
-	if (isCaseInsensitiveToken(token)) {
+	if (DeviceModel.isCaseInsensitiveToken(token)) {
         token = token.toUpperCase();
     }
 
@@ -72,14 +61,11 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
  * @param {string} [token]
  */
 var deactivateDevice = function(application, apid, token) {
-    if (token && isCaseInsensitiveToken(token)) {
-        token = token.toUpperCase();
+    if (apid) {
+        return DeviceModel.deactivateByAPID(application, apid);
+    } else {
+        return DeviceModel.deactivateByToken(application, token);
     }
-
-    var conditions = apid ? {_id: apid} : {token: token};
-    conditions._application = application._id;
-
-	return DeviceModel.updateQ(conditions, {$set: {active: false}});
 };
 
 /**
@@ -95,7 +81,7 @@ var getByAudience = function (application, audience) {
 	}
 
 	if (audience.device_token) {
-        if (isCaseInsensitiveToken(audience.device_token)) {
+        if (DeviceModel.isCaseInsensitiveToken(audience.device_token)) {
             audience.device_token = audience.device_token.toUpperCase();
         }
 

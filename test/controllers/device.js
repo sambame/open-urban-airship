@@ -5,10 +5,10 @@
 var mongoose = require("mongoose"),
     should = require("should"),
     sinon = require("sinon"),
-    async = require("async"),
     Application = require("../../controllers/application"),
     Q = require('q'),
-    Device = require("../../controllers/device");
+    Device = require("../../controllers/device"),
+    DeviceModel = require("../../models/device");
 
 
 describe("device", function() {
@@ -271,5 +271,4 @@ describe("device", function() {
                 done(err);
             });
     });
-
 });

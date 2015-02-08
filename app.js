@@ -3,7 +3,6 @@
 "use strict";
 
 var express = require('express'),
-    mongoose = require('mongoose'),
     device = require('./handlers/device'),
     BasicStrategy = require("passport-http").BasicStrategy,
     application = require('./handlers/application'),
@@ -172,13 +171,7 @@ if (app.get("env") === "development") {
     app.use(errorHandler());
 } else {
     app.use(function (err, req, res, next) {
-        if (err instanceof ApplicationError) {
-            logger.info(util.format("Application Error %s", err));
-            res.writeHead(err.statusCode, {"Content-Type": "application/json"});
-            res.end(JSON.stringify({error: {message: err.message}}));
-        } else {
-            next(err);
-        }
+        next(err);
     });
 }
 

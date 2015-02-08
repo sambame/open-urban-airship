@@ -25,22 +25,11 @@ function getOptions(application) {
     };
 }
 
-function deactivateDevice(apnDevice, time) {
+function deactivateDevice(application, apnDevice, deactivationTime) {
     var token = apnDevice.toString().toUpperCase(),
-        time = time * 1000;
+        time = new moment(deactivationTime * 1000).toDate();
 
-    return DeviceModel.findOneQ({token: token})
-        .then(function(device) {
-            if (!device) {
-                logger.warn(util.format("got feedback on unknown device %s", token));
-                return;
-            }
-
-            logger.info(util.format("device %s is no longer active", device.alias || device.token));
-            device.active = false;
-            device.last_deactivation_date = new moment(time).toDate();
-            return device.saveQ();
-        });
+    return DeviceModel.deactivateByToken(application, token, time);
 }
 
 function createFeedbackIfNeeded(application) {
@@ -64,14 +53,14 @@ function createFeedbackIfNeeded(application) {
             logger.info(util.format("got feedback on %s %s", application.name, JSON.stringify(devicesAndTimes)));
 
             devicesAndTimes.forEach(function (deviceAndTime) {
-                deactivateDevice(deviceAndTime.device, deactivateDevice.time);
+                deactivateDevice(application, deviceAndTime.device, deviceAndTime.time);
             });
         });
     } else {
         feedback.on("feedback", function (device, time) {
             logger.info(util.format("got feedback on %s time '%s' '%s'", application.name, device, time));
 
-            deactivateDevice(device, time);
+            deactivateDevice(application, device, time);
         });
     }
 

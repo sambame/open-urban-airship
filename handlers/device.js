@@ -77,7 +77,7 @@ var createDevice = function (req, res) {
             });
         })
         .catch(function(err) {
-            logger.error(util.format("failed to look for device %s", err)), err;
+            logger.error(util.format("failed to look for device %s", err), err);
             return res.status(500).json({
                 message: err.message,
                 ok: false

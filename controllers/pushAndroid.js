@@ -4,6 +4,7 @@
 var logger = require("../logger"),
     util = require("util"),
     gcm = require("node-gcm"),
+    DeviceModel = require("../models/device"),
     buildMessage = require("./buildNotification");
 
 var retryCount = 3;
@@ -29,23 +30,6 @@ var checkIfUninstall = function(results) {
     return false;
 };
 
-function deactivateDevice(device) {
-    var token = device.token;
-
-    return DeviceModel.findOneQ({token: token})
-        .then(function(device) {
-            if (!device) {
-                logger.warn(util.format("got deactivate on unknown device %s", token));
-                return;
-            }
-
-            logger.info(util.format("device %s is no longer active", device.alias || device.token));
-            device.active = false;
-            device.last_deactivation_date = new Date();
-            return device.saveQ();
-        });
-}
-
 var pushAndroidNotification = function(application, device, notification) {
     // create a message with default values
     var message = buildMessage(notification, "android", "data", gcm.Message),
@@ -55,7 +39,7 @@ var pushAndroidNotification = function(application, device, notification) {
     sender.send(message, registrationIds, retryCount, function (err, result) {
         if (result && result.failure) {
             if (checkIfUninstall(result.results)) {
-                deactivateDevice(device);
+                DeviceModel.deactivateByToken(application, device.token);
             } else {
                 logger.error(util.format("failed to send push %s %s %s %s", device.token, device.alias, err, JSON.stringify(result)));
             }
