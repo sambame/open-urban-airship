@@ -158,7 +158,10 @@ app.map({
             "delete": [authenticate(), device["delete"]]
         },
         '/device_tokens/': {
-            get: [authenticate(), device.list]
+            get: [authenticate(), device.list],
+            'feedback/': {
+                get: [authenticate(), device.feedback]
+            }
         },
         '/push/': {
             post: [authenticate(), push.push]

@@ -5,6 +5,9 @@
 var DeviceModel = require("../models/device"),
     Device = require("../controllers/device"),
     logger = require("../logger"),
+    sinceToDate = require('../sinceToDate'),
+    generalConfig = require("config").general,
+    moment = require("moment"),
     util = require("util");
 
 var supportedPlatforms = ["ios", "android", "test"];
@@ -23,7 +26,7 @@ var deleteDevice = function (req, res) {
             });
         })
         .catch(function(err) {
-            logger.error(util.format("failed to deactivate device %s", err));
+            logger.error(util.format("%s failed to deactivate device %s", req.user.app.name, err), err);
             return res.status(500).json({
                 ok: false
             });
@@ -77,7 +80,7 @@ var createDevice = function (req, res) {
             });
         })
         .catch(function(err) {
-            logger.error(util.format("failed to look for device %s", err), err);
+            logger.error(util.format("%s failed to createOrUpdate (apid: %s, token: %s) device %s", req.user.app.name, apid, deviceToken, err), err);
             return res.status(500).json({
                 message: err.message,
                 ok: false
@@ -91,11 +94,12 @@ var listDevices = function (req, res) {
     }
 
     DeviceModel.find().lean().exec(function(err, devices) {
-        var deviceTokens = [];
-        var activeDevices = 0;
+        var deviceTokens = [],
+            activeDevices = 0;
 
         if (err) {
-            return res.status(500).end();
+            logger.error(util.format("%s failed to query feedback %s", req.user.app.name, err), err);
+            return res.status(500).json({ok:  false, message: err.message});
         }
 
         devices.forEach(function(device) {
@@ -122,13 +126,47 @@ var listDevices = function (req, res) {
             active_device_tokens_count: activeDevices
         };
 
-        res.contentType('json');
-        res.send(list);
+        res.json(list);
+    });
+};
+
+
+var feedbackDevices = function(req, res) {
+    var dateRange = sinceToDate(req.query.since),
+        now = new Date();
+
+
+    var maxDateBack =  now.setDate((new Date()).getDate() - generalConfig.maxFeedbackDaysBack);
+
+    dateRange = dateRange || maxDateBack;
+
+    if (dateRange < maxDateBack) {
+        dateRange = maxDateBack;
+    }
+
+    DeviceModel.find({$and: [{active: false}, {last_deactivation_date: {$gt: dateRange}}]}).sort({last_deactivation_date: 1}).lean().exec(function(err, devices) {
+        if (err) {
+            logger.error(util.format("%s failed to query feedback %s", req.user.app.name, err), err);
+            return res.status(500).json({ok:  false, message: err.message});
+        }
+
+        var deviceTokens = devices.map(function(device) {
+            var deviceToken = {device_token: device.token, marked_inactive_on: moment(device.last_deactivation_date).format("YYYY-MM-DD hh:mm:ss")};
+
+            if (device.alias) {
+                deviceToken.alias = device.alias;
+            }
+
+            return deviceToken;
+        });
+
+        res.json(deviceTokens);
     });
 };
 
 module.exports = {
     put: createDevice,
     list: listDevices,
+    feedback: feedbackDevices,
     "delete": deleteDevice
 };

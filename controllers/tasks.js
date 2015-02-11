@@ -8,8 +8,6 @@ var kue = require('kue'),
 var redisPort = process.env.REDIS_PORT || 6379,
     redisHost = process.env.REDIS_HOST || "127.0.0.1";
 
-logger.info(util.format("redis connected %s:%s", redisHost, redisPort));
-
 var jobs = kue.createQueue({
     prefix: 'openurban_tasks',
     redis: {
@@ -18,7 +16,9 @@ var jobs = kue.createQueue({
     }
 });
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && process.env.NODE_ENV !== "dev") {
+    logger.info(util.format("redis connected %s:%s", redisHost, redisPort));
+
     kue.app.listen(3000);
 
     jobs.active(function (err, ids) {

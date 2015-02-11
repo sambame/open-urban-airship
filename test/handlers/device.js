@@ -17,7 +17,9 @@ describe("device", function() {
         applicationMasterSecret = "applicationMasterSecret",
         deviceToken = "deviceToken",
         deviceAlias = "deviceAlias",
-        devicePlatform = "test";
+        devicePlatform = "test",
+        deviceToken2 = "deviceToken2",
+        deviceToken3 = "deviceToken3";
 
     beforeEach(function (done) {
         this.sinon = sinon.sandbox.create();
@@ -190,4 +192,50 @@ describe("device", function() {
                 done(err);
             });
     });
+
+    it("feedback devices", function(done) {
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return application.saveQ()
+                    .then(function() {
+                        return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
+                    })
+                    .then(function(device) {
+                        Device.deactivate(application, device.apid);
+                    })
+                    .then(function() {
+                        return Device.createOrUpdate(application, null, devicePlatform, deviceToken2)
+                    })
+                    .then(function(device) {
+                        return Device.deactivate(application, device.apid);
+                    })
+                    .then(function() {
+                        return Device.createOrUpdate(application, null, devicePlatform, deviceToken3)
+                    });
+            })
+            .then(function() {
+                request(app)
+                    .get("/api/device_tokens/feedback/?since=0")
+                    .auth(applicationKey, applicationMasterSecret)
+                    .expect(200)
+                    .expect('Content-Type', /json/)
+                    .end(function(err, res) {
+                        if (err) {
+                            return done(err);
+                        }
+
+                        should.exist(res);
+
+                        var j = JSON.parse(res.text);
+
+                        j.length.should.equal(2);
+
+                        done();
+                    });
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
 });
