@@ -7,7 +7,6 @@
     "express-resource": "latest",
     "apn": "latest",
     "node-gcm": "lastest",
-    "node-gcm": "latest",
     "winston": "latest",
     "async": "latest",
     "body-parser": "latest",
