@@ -21,6 +21,7 @@ function getOptions(application) {
         passphrase: application.ios.passphrase,
         gateway: getEndpoint(application.production),
         port: 2195,
+        production: application.production,
         enhanced: true
     };
 }
@@ -43,6 +44,7 @@ function createFeedbackIfNeeded(application) {
         gateway: getEndpoint(application.production),
         port: 2196,
         batchFeedback: application.production,
+        production: application.production,
         interval: 3600
     };
 

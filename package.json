@@ -6,7 +6,7 @@
     "mongoose": "latest",
     "express-resource": "latest",
     "apn": "latest",
-    "node-gcm": "lastest",
+    "node-gcm": "",
     "winston": "latest",
     "async": "latest",
     "body-parser": "latest",
