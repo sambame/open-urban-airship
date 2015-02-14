@@ -30,28 +30,43 @@ var checkIfUninstall = function(results) {
     return false;
 };
 
-var pushAndroidNotification = function(application, device, notification) {
+var pushAndroidNotificationUsingSender = function(gcmSender, application, device, notification, callback) {
     // create a message with default values
     var message = buildMessage(notification, "android", "data", gcm.Message),
-        sender = new gcm.Sender(application.android.gcm_api_key),
         registrationIds = [device.token];
 
-    sender.send(message, registrationIds, retryCount, function (err, result) {
+    gcmSender.send(message, registrationIds, retryCount, function (err, result) {
         if (result && result.failure) {
             if (checkIfUninstall(result.results)) {
                 logger.info(util.format("%s device %s alias: %s has unregister, deactivation it", application.name, device.token, device.alias));
-                DeviceModel.deactivateByToken(application, device.token);
-            } else {
-                logger.error(util.format("%s failed to send push %s %s %s %s", application.name, device.token, device.alias, err, JSON.stringify(result)));
+                DeviceModel.deactivateByToken(application, device.token)
+                    .then(function() {
+                        if (callback) {
+                            callback(err, result);
+                        }
+                    });
+
+                return;
             }
+
+            logger.error(util.format("%s failed to send push %s %s %s %s", application.name, device.token, device.alias, err, JSON.stringify(result)));
         } else if (err) {
             logger.error(util.format("%s failed to send push: %s %s %s", application.name, device.token, device.alias, err));
         } else {
             logger.info(util.format("%s finish sending to token: %s alias: %s - %s", application.name, device.token, device.alias, JSON.stringify(result)))
         }
+
+        if (callback) {
+            callback(err, result);
+        }
     });
 };
 
+var pushAndroidNotification = function(application, device, notification, callback) {
+    pushAndroidNotificationUsingSender(new gcm.Sender(application.android.gcm_api_key), application, device, notification, callback);
+};
+
 module.exports = {
-    push: pushAndroidNotification
+    push: pushAndroidNotification,
+    pushWithSender: pushAndroidNotificationUsingSender
 };
