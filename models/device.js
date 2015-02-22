@@ -44,7 +44,9 @@ DeviceSchema.index({_application: 1, alias: 1}, {unique: false});
 function deactivateByConditions(application, conditions, time) {
     conditions._application = application._id;
 
-    return DeviceModel.findOneQ(conditions)
+    var updateParams = {$set: {active: false, last_deactivation_date: time || new Date()}};
+
+    return DeviceModel.findOneAndUpdateQ(conditions, updateParams, {multiple: false, upsert: false})
         .then(function(device) {
             if (!device) {
                 logger.warn("got deactivate on unknown device", conditions);
@@ -52,10 +54,8 @@ function deactivateByConditions(application, conditions, time) {
             }
 
             logger.info(util.format("device %s (%s) is no longer active", device.alias || device.token, device.platform));
-            device.active = false;
-            device.last_deactivation_date = time || new Date();
 
-            return device.saveQ();
+            return device;
         });
 }
 

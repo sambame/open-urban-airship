@@ -74,6 +74,15 @@ var createDevice = function (req, res) {
 
     Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags)
         .then(function(device) {
+            if (!device) {
+                res.json({
+                    ok: false,
+                    message: "NotFound"
+                });
+
+                return;
+            }
+
             res.json({
                 ok: true,
                 apid: device.apid

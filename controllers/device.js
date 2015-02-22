@@ -2,11 +2,12 @@
 /*eslint-env node */
 "use strict";
 var DeviceModel = require("../models/device"),
+    uuid = require("node-uuid"),
 	logger = require("../logger");
 
 /**
  *
- * @param {String|ApplicationModel} application
+ * @param {ApplicationModel} application
  * @param {string} apid
  * @param {string} platform
  * @param {string} token
@@ -18,40 +19,44 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
         token = token.toUpperCase();
     }
 
-    function createOrUpdate(device) {
-        if (!device) {
-            device = new DeviceModel();
-            device.token = token;
-            device._application =  application._id || application;
-        }
+    var updateParams = {},
+        updateQueryParams;
 
-        if (platform) {
-            device.platform = platform;
-        }
-
-        if (alias) {
-            device.alias = alias;
-        }
-
-        if (tags) {
-            device.tags = tags;
-        }
-
-        device.active = true;
-
-        return device;
-    }
-
-    var findQ = null;
     if (apid) {
-        findQ = DeviceModel.findOneQ({_id: apid, _application: application._id})
+        updateQueryParams = {_id: apid, _application: application._id}
     } else {
-        findQ = DeviceModel.findOneQ({token: token, _application: application._id})
+        updateQueryParams = {token: token, _application: application._id}
     }
 
-    return findQ.then(function(device) {
-            return createOrUpdate(device).saveQ();
-        });
+    var currentTime = new Date();
+
+    updateParams.$setOnInsert = {_id: uuid(), _application: application._id, created_at: currentTime};
+
+    var upsert = true;
+    if (token) {
+        updateParams.token = token;
+    } else {
+        upsert = false;
+    }
+
+    updateParams.$set = {};
+
+    if (platform) {
+        updateParams.$set.platform = platform;
+    }
+
+    if (alias) {
+        updateParams.$set.alias = alias;
+    }
+
+    if (tags) {
+        updateParams.$set.tags = tags;
+    }
+
+    updateParams.$set.active = true;
+    updateParams.updated_at = currentTime;
+
+    return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert});
 };
 
 /**

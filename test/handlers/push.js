@@ -162,15 +162,15 @@ describe("device", function() {
 
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                return application.saveQ();
+                return application.saveQ()
+                    .then(function() {
+                        return Device.createOrUpdate(application, null, devicePlatform, deviceToken1, deviceAlias);
+                    })
+                    .then(function() {
+                        return Device.createOrUpdate(application, null, devicePlatform, deviceToken2, deviceAlias);
+                    });
             })
             .then(function() {
-                return Device.createOrUpdate(applicationKey, null, devicePlatform, deviceToken1, deviceAlias);
-            })
-            .then(function() {
-                return Device.createOrUpdate(applicationKey, null, devicePlatform, deviceToken2, deviceAlias);
-            }).
-            then(function() {
                 request(app)
                     .post("/api/push/")
                     .auth(applicationKey, applicationMasterSecret)
