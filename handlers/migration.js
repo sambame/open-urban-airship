@@ -15,250 +15,252 @@ function authHeader(u, p) {
     return "Basic " + new Buffer(u + ":" + p).toString("base64");
 }
 
-tasks.process("migration.urbanAirship.singleAPID", 50, function(job, done) {
-    var url = "https://go.urbanairship.com/api/apids/" + job.data.apid;
+if (tasks.isSupported) {
+    tasks.process("migration.urbanAirship.singleAPID", 50, function (job, done) {
+        var url = "https://go.urbanairship.com/api/apids/" + job.data.apid;
 
-    logger.info(util.format("loading apid job %s", url));
+        logger.info(util.format("loading apid job %s", url));
 
-    request.get(
-        {
-            url: url,
-            json: true,
-            headers: {
-                "Authorization": authHeader(job.data.key, job.data.master_secret)
-            }
-        },
-        function (err, response, apidDevice) {
-            if (err) {
-                logger.error(util.format("failed to call urban apid api %s", err), err);
-                return done(err);
-            }
-
-            if (response.statusCode >= 400) {
-                logger.error(util.format("failed to call urban apid api %s", response.statusCode));
-                return done(new Error("response failed"));
-            }
-
-            if (!apidDevice.gcm_registration_id) {
-                logger.warn(util.format("device %s has no gcm_registration_id", apidDevice.apid));
-                return done();
-            }
-
-            var device = {
-                _id: apidDevice.apid,
-                token: apidDevice.gcm_registration_id,
-                alias: apidDevice.alias,
-                platform: "android",
-                _application: job.data.applicationId,
-                active: apidDevice.active,
-                tags: apidDevice.tags
-            };
-
-            DeviceModel(device).save(function(err) {
+        request.get(
+            {
+                url: url,
+                json: true,
+                headers: {
+                    "Authorization": authHeader(job.data.key, job.data.master_secret)
+                }
+            },
+            function (err, response, apidDevice) {
                 if (err) {
-                    logger.error(util.format("failed to save Device %s", err), err);
+                    logger.error(util.format("failed to call urban apid api %s", err), err);
+                    return done(err);
                 }
 
-                done(err);
-            });
-        });
-});
+                if (response.statusCode >= 400) {
+                    logger.error(util.format("failed to call urban apid api %s", response.statusCode));
+                    return done(new Error("response failed"));
+                }
 
-tasks.process("migration.urbanAirship.device_tokens", function(job, done) {
-    var url = job.data.url || "https://go.urbanairship.com/api/device_tokens/?";
+                if (!apidDevice.gcm_registration_id) {
+                    logger.warn(util.format("device %s has no gcm_registration_id", apidDevice.apid));
+                    return done();
+                }
 
-    logger.info(util.format("loading device_tokens job %s", url));
+                var device = {
+                    _id: apidDevice.apid,
+                    token: apidDevice.gcm_registration_id,
+                    alias: apidDevice.alias,
+                    platform: "android",
+                    _application: job.data.applicationId,
+                    active: apidDevice.active,
+                    tags: apidDevice.tags
+                };
 
-    ApplicationModel.findOneQ({_id: job.data.key})
-        .then(function(application) {
-            request.get(
-                {
-                    url: url,
-                    json: true,
-                    headers: {
-                        "Authorization": authHeader(job.data.key, job.data.master_secret)
-                    }
-                },
-                function (err, response, deviceTokensResponse) {
+                DeviceModel(device).save(function (err) {
                     if (err) {
-                        logger.error(util.format("failed to call urban device_tokens api %s", err), err);
-                        return done(err);
+                        logger.error(util.format("failed to save Device %s", err), err);
                     }
 
-                    if (response.statusCode >= 400) {
-                        logger.error(util.format("failed to call urban device_tokens api %s", response.statusCode));
-                        return done(new Error("response failed"));
-                    }
+                    done(err);
+                });
+            });
+    });
 
-                    var deviceTokenTasks = [];
+    tasks.process("migration.urbanAirship.device_tokens", function (job, done) {
+        var url = job.data.url || "https://go.urbanairship.com/api/device_tokens/?";
 
-                    function addSingleDevice(deviceToken) {
-                        return function (callback) {
-                            var device = DeviceModel({
-                                    token: deviceToken.device_token,
-                                    alias: deviceToken.alias,
-                                    platform: "ios",
-                                    _application: application._id,
-                                    active: deviceToken.active,
-                                    tags: deviceToken.tags
-                                }),
-                                upsertData = device.toObject();
+        logger.info(util.format("loading device_tokens job %s", url));
 
-                            DeviceModel.findOneAndUpdate(
-                                {
-                                    token: deviceToken.device_token
-                                },
-                                upsertData,
-                                {
-                                    upsert: true
-                                },
-                                function(err) {
-                                    if (err) {
-                                        delete upsertData._id;
-
-                                        DeviceModel.findOneAndUpdate(
-                                            {
-                                                token: deviceToken.device_token
-                                            },
-                                            upsertData,
-                                            {
-                                                upsert: true
-                                            },
-                                            function(err) {
-                                                if (err) {
-                                                    logger.error(util.format("failed to save Device %s", err), err);
-                                                }
-                                                callback(err);
-                                            }
-                                        );
-
-                                        return;
-                                    }
-
-                                    callback(err);
-                                }
-                            );
+        ApplicationModel.findOneQ({_id: job.data.key})
+            .then(function (application) {
+                request.get(
+                    {
+                        url: url,
+                        json: true,
+                        headers: {
+                            "Authorization": authHeader(job.data.key, job.data.master_secret)
                         }
-                    }
-
-                    for (var i = 0; i < deviceTokensResponse.device_tokens.length; i++) {
-                        var currentDeviceToken = deviceTokensResponse.device_tokens[i];
-                        deviceTokenTasks.push(addSingleDevice(currentDeviceToken));
-                    }
-
-                    async.parallel(deviceTokenTasks, function (err) {
+                    },
+                    function (err, response, deviceTokensResponse) {
                         if (err) {
-                            logger.error(util.format("failed to create device_tokens job %s", err), err);
+                            logger.error(util.format("failed to call urban device_tokens api %s", err), err);
                             return done(err);
                         }
 
-                        if (deviceTokensResponse.next_page) {
-                            tasks.create("migration.urbanAirship.device_tokens", {
-                                key: job.data.key,
-                                master_secret: job.data.master_secret,
-                                url: deviceTokensResponse.next_page
-                            }).save(function (err) {
-                                if (err) {
-                                    logger.error(util.format("failed to create next device_tokens job %s", err), err);
-                                }
-                                done(err);
-                            });
-                        } else {
-                            logger.info(util.format("device_tokens migration done"));
-                            done();
+                        if (response.statusCode >= 400) {
+                            logger.error(util.format("failed to call urban device_tokens api %s", response.statusCode));
+                            return done(new Error("response failed"));
                         }
-                    });
-                }
-            );
-        })
-        .catch(function(err) {
-            logger.error(util.format("failed to import %s", err), err);
-            done(err);
-        });
-});
 
-tasks.process("migration.urbanAirship.apids", function(job, done) {
-    var url = job.data.url || "https://go.urbanairship.com/api/apids/";
+                        var deviceTokenTasks = [];
 
-    logger.info(util.format("loading apids job %s", url));
+                        function addSingleDevice(deviceToken) {
+                            return function (callback) {
+                                var device = DeviceModel({
+                                        token: deviceToken.device_token,
+                                        alias: deviceToken.alias,
+                                        platform: "ios",
+                                        _application: application._id,
+                                        active: deviceToken.active,
+                                        tags: deviceToken.tags
+                                    }),
+                                    upsertData = device.toObject();
 
-    ApplicationModel.findOneQ({_id: job.data.key})
-        .then(function(application) {
-            request.get(
-                {
-                    url: url,
-                    json: true,
-                    headers : {
-                        "Authorization": authHeader(job.data.key, job.data.master_secret)
-                    }
-                },
-                function (err, response, apidsResponse) {
-                    if (err) {
-                        logger.error(util.format("failed to call urban apids api %s", err), err);
-                        return done(err);
-                    }
+                                DeviceModel.findOneAndUpdate(
+                                    {
+                                        token: deviceToken.device_token
+                                    },
+                                    upsertData,
+                                    {
+                                        upsert: true
+                                    },
+                                    function (err) {
+                                        if (err) {
+                                            delete upsertData._id;
 
-                    if (response.statusCode >= 400) {
-                        logger.error(util.format("failed to call urban apids api %s", response.statusCode));
-                        return done(new Error("response failed"));
-                    }
+                                            DeviceModel.findOneAndUpdate(
+                                                {
+                                                    token: deviceToken.device_token
+                                                },
+                                                upsertData,
+                                                {
+                                                    upsert: true
+                                                },
+                                                function (err) {
+                                                    if (err) {
+                                                        logger.error(util.format("failed to save Device %s", err), err);
+                                                    }
+                                                    callback(err);
+                                                }
+                                            );
 
-                    var apidTasks = [];
+                                            return;
+                                        }
 
-                    function addSingleAPID(apid) {
-                        return function(callback) {
-                            tasks.create(
-                                "migration.urbanAirship.singleAPID",
-                                {
+                                        callback(err);
+                                    }
+                                );
+                            }
+                        }
+
+                        for (var i = 0; i < deviceTokensResponse.device_tokens.length; i++) {
+                            var currentDeviceToken = deviceTokensResponse.device_tokens[i];
+                            deviceTokenTasks.push(addSingleDevice(currentDeviceToken));
+                        }
+
+                        async.parallel(deviceTokenTasks, function (err) {
+                            if (err) {
+                                logger.error(util.format("failed to create device_tokens job %s", err), err);
+                                return done(err);
+                            }
+
+                            if (deviceTokensResponse.next_page) {
+                                tasks.create("migration.urbanAirship.device_tokens", {
                                     key: job.data.key,
                                     master_secret: job.data.master_secret,
-                                    applicationId: application._id,
-                                    apid: apid
-                                }).attempts(DEFAULT_ATTEMPTS).backoff( {type:'exponential'}).save(function(err) {
+                                    url: deviceTokensResponse.next_page
+                                }).save(function (err) {
                                     if (err) {
-                                        logger.error(util.format("failed to create apid job %s %s", apid, err), err);
+                                        logger.error(util.format("failed to create next device_tokens job %s", err), err);
                                     }
-
-                                    callback(err);
+                                    done(err);
                                 });
+                            } else {
+                                logger.info(util.format("device_tokens migration done"));
+                                done();
+                            }
+                        });
+                    }
+                );
+            })
+            .catch(function (err) {
+                logger.error(util.format("failed to import %s", err), err);
+                done(err);
+            });
+    });
+
+    tasks.process("migration.urbanAirship.apids", function (job, done) {
+        var url = job.data.url || "https://go.urbanairship.com/api/apids/";
+
+        logger.info(util.format("loading apids job %s", url));
+
+        ApplicationModel.findOneQ({_id: job.data.key})
+            .then(function (application) {
+                request.get(
+                    {
+                        url: url,
+                        json: true,
+                        headers: {
+                            "Authorization": authHeader(job.data.key, job.data.master_secret)
                         }
-                    }
-
-                    for (var i=0;i<apidsResponse.apids.length;i++) {
-                        var currentAPID = apidsResponse.apids[i];
-                        apidTasks.push(addSingleAPID(currentAPID.apid));
-                    }
-
-                    async.parallel(apidTasks, function(err) {
+                    },
+                    function (err, response, apidsResponse) {
                         if (err) {
-                            logger.error(util.format("failed to create apid job %s", err), err);
+                            logger.error(util.format("failed to call urban apids api %s", err), err);
                             return done(err);
                         }
 
-                        if (apidsResponse.next_page) {
-                            tasks.create("migration.urbanAirship.apids", {
-                                key: job.data.key,
-                                master_secret: job.data.master_secret,
-                                url: apidsResponse.next_page
-                            }).attempts(DEFAULT_ATTEMPTS).backoff( {type:'exponential'}).save(function(err) {
-                                if (err) {
-                                    logger.error(util.format("failed to create next apids job %s", err), err);
-                                }
-                                done(err);
-                            });
-                        } else {
-                            logger.info(util.format("apids migration done"));
-                            done();
+                        if (response.statusCode >= 400) {
+                            logger.error(util.format("failed to call urban apids api %s", response.statusCode));
+                            return done(new Error("response failed"));
                         }
-                    });
-                }
-            )
-        })
-        .catch(function(err) {
-            logger.error(util.format("failed to get application %s", err), err);
-            done(err);
-        });
-});
+
+                        var apidTasks = [];
+
+                        function addSingleAPID(apid) {
+                            return function (callback) {
+                                tasks.create(
+                                    "migration.urbanAirship.singleAPID",
+                                    {
+                                        key: job.data.key,
+                                        master_secret: job.data.master_secret,
+                                        applicationId: application._id,
+                                        apid: apid
+                                    }).attempts(DEFAULT_ATTEMPTS).backoff({type: 'exponential'}).save(function (err) {
+                                        if (err) {
+                                            logger.error(util.format("failed to create apid job %s %s", apid, err), err);
+                                        }
+
+                                        callback(err);
+                                    });
+                            }
+                        }
+
+                        for (var i = 0; i < apidsResponse.apids.length; i++) {
+                            var currentAPID = apidsResponse.apids[i];
+                            apidTasks.push(addSingleAPID(currentAPID.apid));
+                        }
+
+                        async.parallel(apidTasks, function (err) {
+                            if (err) {
+                                logger.error(util.format("failed to create apid job %s", err), err);
+                                return done(err);
+                            }
+
+                            if (apidsResponse.next_page) {
+                                tasks.create("migration.urbanAirship.apids", {
+                                    key: job.data.key,
+                                    master_secret: job.data.master_secret,
+                                    url: apidsResponse.next_page
+                                }).attempts(DEFAULT_ATTEMPTS).backoff({type: 'exponential'}).save(function (err) {
+                                    if (err) {
+                                        logger.error(util.format("failed to create next apids job %s", err), err);
+                                    }
+                                    done(err);
+                                });
+                            } else {
+                                logger.info(util.format("apids migration done"));
+                                done();
+                            }
+                        });
+                    }
+                )
+            })
+            .catch(function (err) {
+                logger.error(util.format("failed to get application %s", err), err);
+                done(err);
+            });
+    });
+}
 
 var migrateFromUrbanAirship = function(req, res, next) {
     var application = req.user.app,
