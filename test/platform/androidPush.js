@@ -69,7 +69,7 @@ describe("androidPush", function() {
             .catch(function(err) {
                done(err);
             });
-    })
+    });
 
     it("simplePush (failure)", function (done) {
         var gcmSender = new gcm.Sender("token"),
