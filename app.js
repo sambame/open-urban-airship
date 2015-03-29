@@ -120,8 +120,15 @@ if (process.env.NODE_ENV !== "test") {
     app.use(morgan("dev"));
 }
 
+function healthCheck(req, res) {
+    res.end();
+}
+
 app.map({
     '/api': {
+        '/health-check': {
+            get: healthCheck
+        },
         '/migration': {
             '/urbanairship': {
                 post: [authenticate(), migration.urbanAirship]

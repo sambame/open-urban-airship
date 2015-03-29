@@ -104,4 +104,38 @@ describe("androidPush", function() {
             });
     })
 
+    it("simplePush (switched id)", function (done) {
+        var gcmSender = new gcm.Sender("token"),
+            new_registration_id = "new_registration_id",
+            mockGCM = this.sinon.mock(gcmSender);
+
+        minioc.register("gcm").as.value(mockGCM);
+
+        mockGCM.expects("send").once().withArgs().callsArgWith(3, null, {"multicast_id":1,"success":1,"failure":0,"canonical_ids":1,"results":[{"registration_id":new_registration_id,"message_id":"message_id"}]});
+
+        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
+                    .then(function(device) {
+                        device.token.should.equal(deviceToken.toUpperCase());
+                        return device.saveQ();
+                    })
+                    .then(function(device) {
+                        return Q.nfcall(push.pushWithSender, gcmSender, application, device, {alert: "alert"});
+                    })
+                    .then(function() {
+                        return Device.getByAudience(application, {alias: deviceAlias})
+                    })
+                    .then(function(devices) {
+                        var device = devices[0];
+                        device.token.should.equal(new_registration_id);
+                    });
+            })
+            .then(function() {
+                done();
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    })
 });

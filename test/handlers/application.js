@@ -43,6 +43,18 @@ describe("application", function() {
         mongoose.disconnect();
     });
 
+    it("health check", function(done) {
+        request(app)
+            .get("/api/health-check")
+            .expect(200)
+            .end(function (err, res) {
+                should.not.exists(err);
+                should.exist(res);
+
+                done();
+            });
+    })
+
     it("registers new application", function(done) {
         request(app)
             .post("/api/partner/companies/{companyId}/apps")

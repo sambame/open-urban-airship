@@ -30,6 +30,27 @@ var checkIfUninstall = function(results) {
     return false;
 };
 
+/**
+ *
+ * @param {Array} results
+ * @returns {boolean}
+ */
+var checkIfSwitchedToken = function(results) {
+    if (!results) {
+        return false;
+    }
+
+    for (var i=0;i<results.length;i++) {
+        var currentResult = results[i];
+
+        if (currentResult.registration_id) {
+            return currentResult.registration_id;
+        }
+    }
+
+    return false;
+};
+
 var pushAndroidNotificationUsingSender = function(gcmSender, application, device, notification, callback) {
     // create a message with default values
     var message = buildMessage(notification, "android", "data", gcm.Message),
@@ -53,7 +74,21 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
         } else if (err) {
             logger.error(util.format("%s failed to send push: %s %s %s", application.name, device.token, device.alias, err));
         } else {
-            logger.info(util.format("%s finish sending to token: %s alias: %s - %s", application.name, device.token, device.alias, JSON.stringify(result)))
+            var switchedToken = checkIfSwitchedToken(result.results);
+
+            if (switchedToken) {
+                logger.info(util.format("%s: token switched %s => %s", application.name, device.token, switchedToken))
+                DeviceModel.updateQ({_id: device._id}, {$set: {token: switchedToken}})
+                    .then(function() {
+                        // resend
+                        pushAndroidNotificationUsingSender(gcmSender, application, device, notification, callback);
+                    })
+                    .catch(function(err) {
+                        callback(err);
+                    })
+            } else {
+                logger.info(util.format("%s finish sending to token: %s alias: %s - %s", application.name, device.token, device.alias, JSON.stringify(result)))
+            }
         }
 
         if (callback) {
