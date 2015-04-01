@@ -16,7 +16,7 @@ var logger = new (winston.Logger)({
 });
 
 
-logger.verbose = logger.verbose;
+logger.debug = logger.debug;
 logger.info = logger.info;
 logger.error = logger.error;
 logger.warn = logger.warn;

@@ -25,7 +25,7 @@ app.map = function (a, route) {
     for (var key in a) {
         if (a.hasOwnProperty(key)) {
             if (Array.isArray(a[key])) {
-                logger.verbose(util.format("%s %s", key, route));
+                logger.debug(util.format("%s %s", key, route));
                 app[key](route, a[key]);
 
                 continue;
@@ -39,7 +39,7 @@ app.map = function (a, route) {
 
                 // get: function(){ ... }
                 case "function":
-                    logger.verbose(util.format("%s %s", key, route));
+                    logger.debug(util.format("%s %s", key, route));
                     app[key](route, a[key]);
 
                     break;
@@ -57,7 +57,7 @@ if (typeof String.prototype.startsWith != 'function') {
 
 passport.use(new BasicStrategy(
     function(key, secret, done) {
-        logger.verbose(util.format("basic auth for: %s", key));
+        logger.debug(util.format("basic auth for: %s", key));
 
         if (!key) {
             logger.info(util.format("missing auth_access_key"));
@@ -69,7 +69,8 @@ passport.use(new BasicStrategy(
             return done(null, false);
         }
 
-        if (secret === generalConfig.masterSecret && key === generalConfig.masterKey) {
+        if (generalConfig.masterSecret && generalConfig.masterKey && secret === generalConfig.masterSecret && key === generalConfig.masterKey) {
+            logger.info(util.format("using master secret and user"));
             return done(null, {});
         }
 
@@ -86,6 +87,7 @@ passport.use(new BasicStrategy(
                 }
 
                 if (err || !app) {
+                    logger.warn(util.format("application %s not found", key));
                     return done(null, false);
                 }
 
