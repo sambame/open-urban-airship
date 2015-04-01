@@ -81,6 +81,7 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
                 DeviceModel.updateQ({_id: device._id}, {$set: {token: switchedToken}})
                     .then(function() {
                         // resend
+                        device.token = switchedToken;
                         pushAndroidNotificationUsingSender(gcmSender, application, device, notification, callback);
                     })
                     .catch(function(err) {

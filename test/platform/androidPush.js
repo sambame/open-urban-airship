@@ -11,6 +11,7 @@ var sinceToDate = require("../../sinceToDate"),
     gcm = require("node-gcm"),
     mongoose = require("mongoose"),
     Q = require("q"),
+    buildMessage = require("../../controllers/buildNotification"),
     push = require("../../controllers/pushAndroid");
 
 
@@ -111,7 +112,12 @@ describe("androidPush", function() {
 
         minioc.register("gcm").as.value(mockGCM);
 
-        mockGCM.expects("send").once().withArgs().callsArgWith(3, null, {"multicast_id":1,"success":1,"failure":0,"canonical_ids":1,"results":[{"registration_id":new_registration_id,"message_id":"message_id"}]});
+
+        var notification = {alert: "alert"},
+            message = buildMessage(notification, "android", "data", gcm.Message);
+
+        mockGCM.expects("send").once().withArgs(message, [deviceToken.toUpperCase()]).callsArgWith(3, null, {"multicast_id":1,"success":1,"failure":0,"canonical_ids":1,"results":[{"registration_id":new_registration_id,"message_id":"message_id"}]});
+        mockGCM.expects("send").once().withArgs(message, [new_registration_id]).callsArgWith(3, null, {"multicast_id":1,"success":1,"failure":0,"canonical_ids":1,"results":[]});
 
         Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
@@ -121,7 +127,7 @@ describe("androidPush", function() {
                         return device.saveQ();
                     })
                     .then(function(device) {
-                        return Q.nfcall(push.pushWithSender, gcmSender, application, device, {alert: "alert"});
+                        return Q.nfcall(push.pushWithSender, gcmSender, application, device, notification);
                     })
                     .then(function() {
                         return Device.getByAudience(application, {alias: deviceAlias})
