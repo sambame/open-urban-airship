@@ -12,7 +12,6 @@ var express = require('express'),
     bodyParser = require("body-parser"),
     util = require("util"),
     logger = require("./logger"),
-    morgan = require("morgan"),
     multer  = require('multer'),
     generalConfig = require("config").general,
     errorHandler = require("errorhandler"),
@@ -117,10 +116,6 @@ function authenticate() {
 app.use(passport.initialize());
 app.use(bodyParser.json());
 app.use(multer({ dest: './uploads/'}))
-
-if (process.env.NODE_ENV !== "test") {
-    app.use(morgan("dev"));
-}
 
 function healthCheck(req, res) {
     res.end();
