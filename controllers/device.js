@@ -41,6 +41,10 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
 
     updateParams.$set = {};
 
+    if (DeviceModel.isGCMToken(token)) {
+        platform = "android";
+    }
+
     if (platform) {
         updateParams.$set.platform = platform;
     }
@@ -56,7 +60,14 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
     updateParams.$set.active = true;
     updateParams.updated_at = currentTime;
 
-    return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert});
+    if (alias) {
+        return DeviceModel.updateQ({alias: alias,  _application: application._id}, {$unset: {alias: ""}}, {multiple: true})
+            .then(function(a,b) {
+                return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert});
+            })
+    } else {
+        return  DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert});
+    }
 };
 
 /**

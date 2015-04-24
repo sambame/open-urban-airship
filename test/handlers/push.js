@@ -178,7 +178,7 @@ describe("device", function() {
                     .expect(200)
                     .end(function (err, res) {
                         should.exist(res);
-                        pushSpy.calledTwice.should.be.true;
+                        pushSpy.calledOnce.should.be.true;
 
                         done(err);
                     }

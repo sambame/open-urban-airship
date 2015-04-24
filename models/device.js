@@ -59,6 +59,14 @@ function deactivateByConditions(application, conditions, time) {
         });
 }
 
+var isGCMToken = function(token) {
+    if (!token) {
+        return false;
+    }
+
+    return token.length >= iosTokenLength;
+};
+
 var isCaseInsensitiveToken = function(token) {
     if (!token) {
         return false;
@@ -68,6 +76,7 @@ var isCaseInsensitiveToken = function(token) {
 };
 
 DeviceSchema.statics.isCaseInsensitiveToken = isCaseInsensitiveToken;
+DeviceSchema.statics.isGCMToken = isGCMToken;
 
 DeviceSchema.statics.deactivateByAPID = function(application, apid, time) {
     return deactivateByConditions(application, {_id: apid}, time);
