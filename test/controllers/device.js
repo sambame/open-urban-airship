@@ -24,7 +24,7 @@ describe("device", function() {
         applicationSecret2 = "applicationSecret2",
         applicationMasterSecret2 = "applicationMasterSecret2",
 
-        veryLongDeviceToken = "AAAAAAA0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789aaaaaaaaa",
+        veryLongDeviceToken = "lahxy2rm7sc:APA91bherovusah_qewtemucvcuhnoj3q145ftuycyumjbeemk6u-9qrxcehcaxivdrq665vbpunjihpbjrynamrwnjheqq5vephya8dyjkbmkutnhr7cygt1tmsoqvxliyzkzuk5u-e",
         deviceToken1 = "deviceToken1",
         deviceToken2 = "deviceToken2",
         deviceAlias = "deviceAlias",
