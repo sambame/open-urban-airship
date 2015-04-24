@@ -41,10 +41,6 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
 
     updateParams.$set = {};
 
-    if (DeviceModel.isGCMToken(token)) {
-        platform = "android";
-    }
-
     if (platform) {
         updateParams.$set.platform = platform;
     }
