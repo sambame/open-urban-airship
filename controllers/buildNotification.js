@@ -2,6 +2,41 @@
 /*eslint-env node */
 "use strict";
 
+var fixAndroidNotificationParams = function(message) {
+    message.notification = message.notification || {};
+
+    if (message.alert) {
+        message.notification.body = message.alert;
+        delete message.alert;
+    }
+
+    if (message.title) {
+        message.notification.title = message.title;
+        delete message.title;
+    }
+
+    if (message.icon) {
+        message.notification.icon = message.icon;
+        delete message.icon;
+    }
+
+    if (message.badge) {
+        message.notification.badge = message.badge;
+        delete message.badge;
+    }
+
+    if (message.tag) {
+        message.notification.tag = message.tag;
+        delete message.tag;
+    }
+
+    if (message["click-action"]) {
+        message.notification["click-action"] = message["click-action"];
+        delete message["click-action"];
+    }
+};
+
+
 /**
  *
  * @param {object} notification
@@ -71,6 +106,10 @@ function buildMessage(notification, platform, platformDataKey, platformNotificat
         }
 
         msg[platformDataKey][platformExtraKey] = platformExtra[platformExtraKey];
+    }
+
+    if (platform === "android") {
+        fixAndroidNotificationParams(msg);
     }
 
     return msg;

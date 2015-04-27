@@ -58,11 +58,11 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
 
     if (alias) {
         return DeviceModel.updateQ({alias: alias,  _application: application._id}, {$unset: {alias: ""}}, {multiple: true})
-            .then(function(a,b) {
-                return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert});
+            .then(function() {
+                return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
             })
     } else {
-        return  DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert});
+        return  DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
     }
 };
 

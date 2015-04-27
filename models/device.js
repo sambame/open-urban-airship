@@ -46,7 +46,7 @@ function deactivateByConditions(application, conditions, time) {
 
     var updateParams = {$set: {active: false, last_deactivation_date: time || new Date()}};
 
-    return DeviceModel.findOneAndUpdateQ(conditions, updateParams, {multiple: false, upsert: false})
+    return DeviceModel.findOneAndUpdateQ(conditions, updateParams, {multiple: false, upsert: false, new: true})
         .then(function(device) {
             if (!device) {
                 logger.warn("got deactivate on unknown device", conditions);
@@ -64,7 +64,7 @@ var isGCMToken = function(token) {
         return false;
     }
 
-    return token.length >= iosTokenLength;
+    return token.length > iosTokenLength;
 };
 
 var isCaseInsensitiveToken = function(token) {

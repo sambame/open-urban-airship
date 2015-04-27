@@ -25,7 +25,7 @@ var createApplication = function(name, production, key, master_secret, secret, c
 	callback(null, application);
 };
 
-var createApplicationPromise = function(name, production, key, master_secret, secret) {
+var createApplicationQ = function(name, production, key, master_secret, secret) {
 	var p = promisify(createApplication);
 
 	return p(name, production, key, master_secret, secret);
@@ -48,7 +48,7 @@ var getByKey = function(applicationKey) {
 };
 
 module.exports = {
-	create: createApplicationPromise,
+	create: createApplicationQ,
 	getByKey: getByKey,
 	configureIOS: configureIOS
 };
