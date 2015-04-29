@@ -167,6 +167,8 @@ var feedbackDevices = function(req, res) {
 
             if (device.alias) {
                 deviceToken.alias = device.alias;
+            } else {
+                deviceToken.alias = null;
             }
 
             return deviceToken;
