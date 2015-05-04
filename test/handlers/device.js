@@ -226,9 +226,12 @@ describe("device", function() {
 
                         should.exist(res);
 
-                        var j = JSON.parse(res.text);
+                        var feedbackResult = res.body;
 
-                        j.length.should.equal(2);
+                        feedbackResult.length.should.equal(2);
+
+                        (feedbackResult[0].alias === null).should.be.false;
+                        (feedbackResult[1].alias === null).should.be.true;
 
                         done();
                     });

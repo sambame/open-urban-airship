@@ -38,7 +38,7 @@ var createDevice = function (req, res) {
         return res.status(400).end();
     }
 
-    logger.info(util.format("createDevice %s", JSON.stringify(req.body)));
+    logger.info(util.format("%s createDevice %s on token %s", req.user.app.name, JSON.stringify(req.body), req.params.token || req.params.apid));
 
     var platform = req.body.platform;
     if (platform && typeof platform !== "string") {
@@ -47,7 +47,7 @@ var createDevice = function (req, res) {
 
     var apid = req.params.apid,
         isAPID = !!apid,
-        deviceToken = isAPID ? req.body.params : req.params.token;
+        deviceToken = isAPID ? req.body.apid : req.params.token;
 
     if (!platform && !isAPID) {
         if (req.params.token.length === 64) {
