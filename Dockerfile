@@ -8,11 +8,11 @@ ENV PATH $PATH:/nodejs/bin
 add package.json /var/www/openurban/package.json
 
 run apt-get -y update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends python python-setuptools curl gcc make build-essential openssl git && \
-    easy_install supervisor && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends python ca-certificates python-setuptools curl gcc make build-essential openssl git && \
+    easy_install supervisor==3.1.3 && \
     echo_supervisord_conf > /etc/supervisord.conf && \
     printf "[include]\nfiles = /var/www/openurban/Supervisorfile.ini\n" >> /etc/supervisord.conf && \
-    mkdir /nodejs && curl http://nodejs.org/dist/v0.10.33/node-v0.10.33-linux-x64.tar.gz | tar xvzf - -C /nodejs --strip-components=1 && \
+    mkdir /nodejs && curl http://nodejs.org/dist/v0.10.36/node-v0.10.36-linux-x64.tar.gz | tar xvzf - -C /nodejs --strip-components=1 && \
     mkdir -p /var/www/openurban && \
     cd /var/www/openurban && \
     npm install --production --no-color --loglevel info && \
