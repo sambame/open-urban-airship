@@ -1,4 +1,4 @@
-FROM debian:wheezy
+FROM debian:jessie
 MAINTAINER Shay Erlichmen shay@samba.me
 
 env NODE_ENV production
@@ -7,8 +7,8 @@ ENV PATH $PATH:/nodejs/bin
 
 add package.json /var/www/openurban/package.json
 
-run apt-get -yqq update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -yqq install --no-install-recommends python python-setuptools curl gcc make build-essential openssl git && \
+run apt-get -y update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends python python-setuptools curl gcc make build-essential openssl git && \
     easy_install supervisor && \
     echo_supervisord_conf > /etc/supervisord.conf && \
     printf "[include]\nfiles = /var/www/openurban/Supervisorfile.ini\n" >> /etc/supervisord.conf && \
