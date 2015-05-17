@@ -6,7 +6,15 @@ var fixAndroidNotificationParams = function(message) {
     message.notification = message.notification || {};
 
     if (message.alert) {
-        message.notification.body = message.alert;
+        if (message.alert["loc-key"]) {
+            message.notification["body_loc_key"] = message.alert["loc-key"];
+
+            if (message.alert["loc-args"]) {
+                message.notification["body_loc_args"] = message.alert["loc-args"];
+            }
+        } else {
+            message.notification.body = message.alert;
+        }
         delete message.alert;
     }
 

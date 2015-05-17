@@ -124,7 +124,6 @@
                           "master_secret": "AbC232...",
                           "push_service_status": "development",
                           "push_status": "none",
-                          "android_package_name": "",
                           "c2dm_auth_token": "",
                           "gcm_api_key": ""
                        },
@@ -158,7 +157,6 @@
                                 {
                                     "name": "A Partner App",
                                     "production": false,
-                                    "android_package_name": "com.packagename",
                                     "gcm_api_key": "some.gcm.key",
                                     "ios_certificate": "<base64 encoded string of the .p12 with the private key>",
                                     "ios_certificate_password": "<optional password, if the .p12 was exported with one>"
@@ -200,7 +198,6 @@
                                 {
                                     "name": "A Partner App",
                                     "production": false,
-                                    "android_package_name": "com.packagename",
                                     "gcm_api_key": "some.gcm.key",
                                     "ios_certificate": "<base64 encoded string of the .p12 with the private key>",
                                     "ios_certificate_password": "<optional password, if the .p12 was exported with one>"

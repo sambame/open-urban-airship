@@ -39,10 +39,6 @@ var updateApplication = function  (req, res) {
             application.android.gcm_api_key = params.gcm_api_key;
         }
 
-        if (params.android_package_name) {
-            application.android.android_package_name = params.android_package_name;
-        }
-
         application.production = !!params.production;
 
         application.save(function (err) {
@@ -112,8 +108,7 @@ var createApplication = function (req, res) {
                     .then(function (application) {
                         if (params.gcm_api_key) {
                             application.android = {
-                                gcm_api_key: params.gcm_api_key,
-                                android_package_name: params.android_package_name
+                                gcm_api_key: params.gcm_api_key
                             };
                         }
 

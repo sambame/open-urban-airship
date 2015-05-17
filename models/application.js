@@ -17,8 +17,7 @@ var ApplicationSchema = new Schema({
         pushExpirationDate: Date
     },
     android: {
-        gcm_api_key: String,
-        android_package_name: String
+        gcm_api_key: String
     },
     key: {type: String, get: function() {return this._id;}},
     old_key: {type: String}

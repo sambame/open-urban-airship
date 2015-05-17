@@ -57,6 +57,7 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
     updateParams.updated_at = currentTime;
 
     if (alias) {
+        // the the previously registered alias
         return DeviceModel.updateQ({alias: alias,  _application: application._id}, {$unset: {alias: ""}}, {multiple: true})
             .then(function() {
                 return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
