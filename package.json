@@ -6,7 +6,7 @@
     "mongoose": "> 4.0.0",
     "express-resource": "latest",
     "apn": "latest",
-    "node-gcm": "",
+    "node-gcm": "git://github.com/sambame/node-gcm",
     "winston": "latest",
     "async": "latest",
     "body-parser": "latest",
@@ -24,7 +24,7 @@
     "mongoose-q": "latest",
     "kue": "latest",
     "request": "latest",
-    "openssl-wrapper": "git://github.com/sambame/node-openssl-wrapper",
+    "openssl-wrapper": "node-openssl-wrapper",
     "moment": "latest"
   },
   "devDependencies": {
