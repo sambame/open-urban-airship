@@ -99,7 +99,9 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
 };
 
 var pushAndroidNotification = function(application, device, notification, callback) {
-    pushAndroidNotificationUsingSender(new gcm.Sender(application.android.gcm_api_key), application, device, notification, callback);
+    var gcmSendURI = 'https://jmt17.google.com:443/gcm/send';
+
+    pushAndroidNotificationUsingSender(new gcm.Sender(application.android.gcm_api_key, {gcmSendURI: gcmSendURI}), application, device, notification, callback);
 };
 
 module.exports = {

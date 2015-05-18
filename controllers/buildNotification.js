@@ -18,6 +18,12 @@ var fixAndroidNotificationParams = function(message) {
         delete message.alert;
     }
 
+    if (message.sound) {
+        message.notification.sound = message.sound
+        message.sound = "default"; // TODO remove this
+        delete message.sound;
+    }
+
     if (message.title) {
         message.notification.title = message.title;
         delete message.title;
