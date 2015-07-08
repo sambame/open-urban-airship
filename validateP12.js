@@ -13,7 +13,11 @@ function validateP12(signedData, passphrase, production) {
 
             parsed.production = production;
             validateCredentials(parsed);
-            return credentials;
+
+            var certificate = parsed.certificates[0],
+                validity = certificate.validity();
+
+            return validity.notAfter;
         });
 }
 

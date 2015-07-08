@@ -20,12 +20,11 @@ var createSecureRandom = function(callback) {
 
 var updateApplication = function  (req, res) {
     var params = req.body,
-        ios_certificate,
-        pushExpirationDate;
+        ios_certificate;
 
     var application = req.user.app;
 
-    function updateApp() {
+    function updateApp(pushExpirationDate) {
         if (params.ios_certificate) {
             application.ios.pfxData = ios_certificate;
             application.ios.pushExpirationDate = pushExpirationDate;
@@ -64,8 +63,7 @@ var updateApplication = function  (req, res) {
         ios_certificate = new Buffer(params.ios_certificate, 'base64');
         validateP12(ios_certificate, params.ios_certificate_password || application.ios.passphrase)
             .then(function (expirationDate) {
-                pushExpirationDate = expirationDate;
-                updateApp();
+                updateApp(expirationDate);
             })
             .catch(function (err) {
                 logger.error(util.format("failed to validate ios certificate: %s", err), err);
@@ -82,10 +80,11 @@ var updateApplication = function  (req, res) {
 
 var createApplication = function (req, res) {
     var params = req.body,
-        ios_certificate,
-        pushExpirationDate;
+        ios_certificate;
 
-    function createApp() {
+    params.production = !!params.production;
+
+    function createApp(pushExpirationDate) {
         async.parallel(
             [
                 createSecureRandom,
@@ -139,10 +138,9 @@ var createApplication = function (req, res) {
 
     if (params.ios_certificate) {
         ios_certificate = new Buffer(params.ios_certificate, 'base64');
-        validateP12(ios_certificate, params.ios_certificate_password)
+        validateP12(ios_certificate, params.ios_certificate_password, params.production)
             .then(function(expirationDate) {
-                pushExpirationDate = expirationDate;
-                createApp();
+                createApp(expirationDate);
             })
             .catch(function(err) {
                 logger.error(util.format("failed to validate ios certificate %s", err), err);
