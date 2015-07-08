@@ -2,35 +2,19 @@
 /*eslint-env node */
 "use strict";
 
-var openssl = require('openssl-wrapper'),
-    moment = require('moment');
+var loadCredentials = require("./credentials/load"),
+    parseCredentials = require("./credentials/parse"),
+    validateCredentials = require("./credentials/validate");
 
-function validateP12(signedData, password) {
-    return openssl.qExec('pkcs12', signedData, {password: "pass:"+password})
-        .then(function(pemData) {
-            return openssl.qExec('x509', pemData, {noout: true, enddate: true});
-        })
-        .then(function(data) {
-            var prefix = "notAfter=";
-            data = data.toString('utf8');
-            if (data.lastIndexOf(prefix) !== 0) {
-                throw new Error("Invalid file mismatch header " + data);
-            }
+function validateP12(signedData, passphrase, production) {
+    return loadCredentials({pfx: signedData, passphrase: passphrase})
+        .then(function(credentials) {
+            var parsed = parseCredentials(credentials);
 
-            data = data.substr(prefix.length);
-
-            var d = moment(data, 'MMM D HH:mm:ss YYYY ZZ');
-
-            if (!d.isValid()) {
-                throw new Error("Invalid file (date)");
-            }
-
-            if (d.toDate() < new Date()) {
-                throw new Error("Certificate date has pass " + d.format());
-            }
-
-            return d.toDate();
-        })
+            parsed.production = production;
+            validateCredentials(parsed);
+            return credentials;
+        });
 }
 
 

@@ -50,6 +50,13 @@ var fixAndroidNotificationParams = function(message) {
     }
 };
 
+function fixiOSNotificationParams(notification) {
+    if (notification["content-available"]) {
+        notification.contentAvailable = notification["content-available"] ? true : false;
+        delete notification["content-available"];
+    }
+}
+
 
 /**
  *
@@ -124,6 +131,8 @@ function buildMessage(notification, platform, platformDataKey, platformNotificat
 
     if (platform === "android") {
         fixAndroidNotificationParams(msg);
+    } else if (platform === "ios") {
+        fixiOSNotificationParams(msg);
     }
 
     return msg;

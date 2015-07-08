@@ -2,7 +2,7 @@
 /*eslint-env node */
 "use strict";
 
-var mongoose = require("mongoose"),
+var mongoose = require("mongoose-q")(require("mongoose")),
     Schema = mongoose.Schema,
     logger = require("../logger"),
     util = require("util"),

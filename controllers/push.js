@@ -21,7 +21,7 @@ var push = function(application, audience, notification) {
 
                 if (!currentDevice.active) {
                     inactiveDevices.push(currentDevice);
-                    logger.info(util.format("device %s is not active (alias: %s)", currentDevice.token, currentDevice.alias));
+                    logger.info(util.format("%s: device %s is not active (alias: %s)", application.name, currentDevice.token, currentDevice.alias));
                     continue;
                 }
 

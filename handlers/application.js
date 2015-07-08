@@ -69,7 +69,7 @@ var updateApplication = function  (req, res) {
             })
             .catch(function (err) {
                 logger.error(util.format("failed to validate ios certificate: %s", err), err);
-                res.status(500);
+                res.status(400);
                 res.json({
                     ok: false,
                     err: err.message
@@ -146,7 +146,7 @@ var createApplication = function (req, res) {
             })
             .catch(function(err) {
                 logger.error(util.format("failed to validate ios certificate %s", err), err);
-                res.status(500);
+                res.status(400);
                 res.json({
                     ok: false,
                     err: err.message

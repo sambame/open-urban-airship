@@ -6,7 +6,7 @@
     "mongoose": "> 4.0.0",
     "express-resource": "latest",
     "apn": "latest",
-    "node-gcm": "git://github.com/sambame/node-gcm",
+    "node-gcm": "latest",
     "winston": "latest",
     "async": "latest",
     "body-parser": "latest",
@@ -25,7 +25,8 @@
     "kue": "latest",
     "request": "latest",
     "openssl-wrapper": "latest",
-    "moment": "latest"
+    "moment": "latest",
+    "node-forge": "latest"
   },
   "devDependencies": {
     "debug": "latest",

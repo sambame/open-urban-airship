@@ -110,6 +110,7 @@ function wireService(application, service) {
  *
  * @param {ApplicationModel} application
  * @returns apn.Connection
+ *
  */
 
 function createConnectionIfNeeded(application) {
@@ -124,15 +125,6 @@ function createConnectionIfNeeded(application) {
     return connections[application.key];
 }
 
-function postProcessMessage(notification) {
-    if (notification["content-available"]) {
-        notification.contentAvailable = notification["content-available"];
-        delete notification["content-available"];
-    }
-
-    return notification;
-}
-
 /**
  *
  * @param {ApplicationModel} application
@@ -143,13 +135,12 @@ var pushAppleNotification = function(application, device, notification) {
     createFeedbackIfNeeded(application);
 
     var apnsConnection = createConnectionIfNeeded(application),
-        message = postProcessMessage(buildMessage(notification, "ios", "payload", apn.Notification));
+        message = buildMessage(notification, "ios", "payload", apn.Notification);
 
     apnsConnection.pushNotification(message, new apn.Device(device.token));
 };
 
 module.exports = {
     push: pushAppleNotification,
-    postProcessMessage: postProcessMessage,
     deactivateDevice: deactivateDevice
 };
