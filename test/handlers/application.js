@@ -77,7 +77,7 @@ describe("application", function() {
                 var deferred = Q.defer();
 
                 request(app)
-                    .post("/api/partner/companies/{companyId}/app/" + application.key)
+                    .post("/api/partner/companies/{companyId}/app")
                     .auth(application.key, application.secret)
                     .send({gcm_api_key: ApplicationAndroidGCMKey})
                     .expect(200)
