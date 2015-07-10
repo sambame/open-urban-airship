@@ -18,10 +18,32 @@ var fixAndroidNotificationParams = function(message) {
         delete message.alert;
     }
 
+    if (message.data.alert) {
+        if (message.data.alert["loc-key"]) {
+            message.notification["body_loc_key"] = message.data.alert["loc-key"];
+
+            if (message.data.alert["loc-args"]) {
+                message.notification["body_loc_args"] = message.data.alert["loc-args"];
+            }
+        } else {
+            message.notification.body = message.data.alert;
+        }
+        delete message.alert;
+    }
+
+    if (message.notification.alert) {
+        message.notification.body = message.notification.alert;
+        delete message.notification.alert;
+    }
+
     if (message.sound) {
-        message.notification.sound = message.sound
-        message.sound = "default"; // TODO remove this
+        message.notification.sound = message.sound;
         delete message.sound;
+    }
+
+    if (message.data.sound) {
+        message.notification.sound = message.data.sound;
+        delete message.data.sound;
     }
 
     if (message.title) {
@@ -29,9 +51,19 @@ var fixAndroidNotificationParams = function(message) {
         delete message.title;
     }
 
+    if (message.data.title) {
+        message.notification.title = message.data.title;
+        delete message.data.title;
+    }
+
     if (message.icon) {
         message.notification.icon = message.icon;
         delete message.icon;
+    }
+
+    if (message.data.icon) {
+        message.notification.icon = message.data.icon;
+        delete message.data.icon;
     }
 
     if (message.badge) {
@@ -39,14 +71,33 @@ var fixAndroidNotificationParams = function(message) {
         delete message.badge;
     }
 
+    if (message.data.badge) {
+        message.notification.badge = message.data.badge;
+        delete message.data.badge;
+    }
+
     if (message.tag) {
         message.notification.tag = message.tag;
         delete message.tag;
     }
 
+    if (message.data.tag) {
+        message.notification.tag = message.data.tag;
+        delete message.data.tag;
+    }
+
     if (message["click-action"]) {
         message.notification["click-action"] = message["click-action"];
         delete message["click-action"];
+    }
+
+    if (message.data["click-action"]) {
+        message.notification["click-action"] = message.data["click-action"];
+        delete message.data["click-action"];
+    }
+
+    if ((message.notification || {}).sound) {
+        message.notification.sound = "default";
     }
 };
 

@@ -148,7 +148,7 @@ app.map({
                         }
                     }
                 },
-                '/app/:appKey': {
+                '/app': {
                     post: [authenticate(), application.update]
                 }
             }

@@ -8,6 +8,7 @@ var ApplicationModel = require("../models/application"),
     util = require('util'),
     crypto = require("crypto"),
     async = require("async"),
+    Q = require('q'),
     base64url = require('base64url'),
     validateP12 = require('../validateP12'),
     Application = require('../controllers/application');
@@ -40,8 +41,40 @@ var updateApplication = function  (req, res) {
 
         application.production = !!params.production;
 
-        application.save(function (err) {
-            if (err) {
+        function validateCertificateIfNeeded() {
+            var deferred = Q.defer();
+
+            if (application.ios.pfxData && application.ios.pfxData) {
+                validateP12(application.ios.pfxData, application.ios.passphrase, application.production)
+                    .then(function() {
+                        deferred.resolve();
+                    })
+                    .catch(function (err) {
+                        logger.info(util.format("failed to validate ios certificate: %s", err), err);
+
+                        deferred.reject(err);
+                    });
+            } else {
+                deferred.resolve();
+            }
+
+            return deferred.promise;
+        }
+
+        validateCertificateIfNeeded().
+            then(function() {
+                return application.saveQ();
+            })
+            .then(function(application) {
+                var params = {ok: true, key: application._id, name: application.name, production: application.production};
+
+                if (application.ios && application.ios.pushExpirationDate) {
+                    params.pushExpirationDate = application.ios.pushExpirationDate.toISOString();
+                }
+
+                return res.json(params);
+            })
+            .catch(function(err) {
                 logger.error(util.format("failed to save application"), err);
                 res.status(500);
 
@@ -49,14 +82,7 @@ var updateApplication = function  (req, res) {
                     ok: false,
                     err: err.message
                 })
-            }
-
-            return res.json({
-                ok: true
             });
-
-            res.end();
-        });
     }
 
     if (params.ios_certificate) {
@@ -66,7 +92,7 @@ var updateApplication = function  (req, res) {
                 updateApp(expirationDate);
             })
             .catch(function (err) {
-                logger.error(util.format("failed to validate ios certificate: %s", err), err);
+                logger.info(util.format("failed to validate ios certificate: %s", err), err);
                 res.status(400);
                 res.json({
                     ok: false,
@@ -164,16 +190,33 @@ var listApplications = function (req, res) {
             return res.send('FAILED!');
         }
 
-        var apps = [];
+        var apps = [],
+            status = 200;
+
         applications.forEach(function(app) {
-            apps.push({
+            var params = {
                 name: app.name,
                 master_secret: app.master_secret,
                 secret: app.secret,
                 key: app.key,
                 production: app.production
-            });
+            };
+
+            if (app.ios && app.ios.pushExpirationDate) {
+                params.pushExpirationDate = app.ios.pushExpirationDate;
+
+                var tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                if (app.ios.pushExpirationDate.getTime() <= tomorrow.getTime()) {
+                    status = 499;
+                }
+            }
+
+            apps.push(params);
         });
+
+        res.status(status);
 
         res.json({applications: apps});
     });

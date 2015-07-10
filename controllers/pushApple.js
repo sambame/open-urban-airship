@@ -69,6 +69,11 @@ function createFeedbackIfNeeded(application) {
     logger.debug(util.format("push devices: %s application: %s", application));
 
     feedbacks[application.key] = feedback;
+
+    feedback.on("error", function (feedbackErr) {
+        logger.error(util.format("%s: feedback error %s", application.name, feedbackErr), feedbackErr);
+        delete feedbacks[application.key];
+    });
 }
 
 function wireService(application, service) {
@@ -101,6 +106,10 @@ function wireService(application, service) {
 
     service.on('socketError',  function (err) {
         logger.warn(util.format("%s socket error %s", application.name, err), err);
+    });
+
+    service.on('error',  function (err) {
+        logger.error(util.format("%s error %s", application.name, err), err);
     });
 
     return service;

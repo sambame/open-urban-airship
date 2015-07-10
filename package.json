@@ -2,8 +2,8 @@
   "name": "open-urban-airship",
   "version": "0.0.1",
   "dependencies": {
-    "express": "> 4.0.0",
-    "mongoose": "> 4.0.0",
+    "express": "4.x.x",
+    "mongoose": "4.x.x",
     "express-resource": "latest",
     "apn": "latest",
     "node-gcm": "latest",
