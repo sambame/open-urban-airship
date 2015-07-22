@@ -21,10 +21,7 @@ var push = function (req, res) {
 	}
 
 	Push.push(req.user.app, req.body.audience, req.body.notification)
-        .then(function(devices) {
-            var activeDevices = devices[0],
-                inactiveDevices = devices[1];
-
+        .spread(function(activeDevices, inactiveDevices) {
             res.json({
                 "ok": true,
                 "push_ids": activeDevices.map(function (device) {
