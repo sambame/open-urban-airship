@@ -225,14 +225,14 @@ var configureIOS = function(req, res) {
         return res.status(400).end();
     }
 
-    if (!req.files.pfx) {
+    if (!req.pfx) {
         return res.status(400).end();
     }
 
     async.waterfall(
         [
             function(callback) {
-                fs.readFile(req.files.pfx.path, callback);
+                fs.readFile(req.pfx.path, callback);
             },
             function(data, callback) {
                 var name = req.body.name || "default",
@@ -258,7 +258,7 @@ var configureIOS = function(req, res) {
                     });
             },
             function(callback) {
-                fs.unlink(req.files.pfx.path, callback);
+                fs.unlink(req.pfx.path, callback);
             }
         ],
         function(err) {
