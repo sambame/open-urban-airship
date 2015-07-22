@@ -57,7 +57,7 @@ describe("androidPush", function() {
 
         mockGCM.expects("send").once().withArgs().callsArgWith(3, null, {});
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
                     .then(function(device) {
@@ -80,7 +80,7 @@ describe("androidPush", function() {
 
         mockGCM.expects("send").once().withArgs().callsArgWith(3, null, {"multicast_id":1,"success":0,"failure":1,"canonical_ids":0,"results":[{"error":"NotRegistered"}]});
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
                     .then(function(device) {
@@ -119,7 +119,7 @@ describe("androidPush", function() {
         mockGCM.expects("send").once().withArgs(message, [deviceToken.toUpperCase()]).callsArgWith(3, null, {"multicast_id":1,"success":1,"failure":0,"canonical_ids":1,"results":[{"registration_id":new_registration_id,"message_id":"message_id"}]});
         mockGCM.expects("send").once().withArgs(message, [new_registration_id]).callsArgWith(3, null, {"multicast_id":1,"success":1,"failure":0,"canonical_ids":1,"results":[]});
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
                     .then(function(device) {

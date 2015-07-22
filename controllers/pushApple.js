@@ -6,6 +6,7 @@ var logger = require("../logger"),
     buildMessage = require("./buildNotification"),
     DeviceModel = require("../models/device"),
     moment = require("moment"),
+    _ = require("lodash"),
     apn = require("apn");
 
 var	feedbacks = {},
@@ -15,13 +16,35 @@ function getEndpoint(production) {
     return production ? "gateway.push.apple.com" : "gateway.sandbox.push.apple.com";
 }
 
-function getOptions(application) {
+function getCertificateNamed(application, name) {
+    name = name || "default";
+
+    if (name === "default") {
+        var production = _.isUndefined(application.ios.production) ? application.production : application.ios.production;
+        return {pfx: application.ios.pfxData, passphrase: application.ios.passphrase, production: production};
+    }
+
+    var certificateIndex =  _.findIndex(application.ios.certificates, function(certificate) {
+        return certificate.name === name.toLocaleLowerCase();
+    });
+
+    if (certificateIndex === -1) {
+        return {};
+    }
+
+    var selectedCertificate = application.ios.certificates[certificateIndex];
+    return {pfx: selectedCertificate.pfxData, passphrase: selectedCertificate.passphrase, production: selectedCertificate.production};
+}
+
+function getOptions(application, name) {
+    var certificate = getCertificateNamed(application, name);
+
     return {
-        pfx: application.ios.pfxData,
-        passphrase: application.ios.passphrase,
-        gateway: getEndpoint(application.production),
+        pfx: certificate.pfx,
+        passphrase: certificate.passphrase,
+        gateway: getEndpoint(certificate.production),
         port: 2195,
-        production: application.production,
+        production: certificate.production,
         enhanced: true
     };
 }
@@ -33,18 +56,31 @@ function deactivateDevice(application, apnDevice, deactivationTime) {
     return DeviceModel.deactivateByToken(application, token, time);
 }
 
-function createFeedbackIfNeeded(application) {
-    if (feedbacks[application.key]) {
+function createApplicationNameLookupKey(application, name) {
+    name = name || "default";
+
+    return application.key + "$$$" + name;
+}
+
+/**
+ *
+ * @param application
+ * @param {String} name
+ */
+function createFeedbackIfNeeded(application, name) {
+    if (feedbacks[createApplicationNameLookupKey(application, name)]) {
         return;
     }
 
+    var certificate = getCertificateNamed(application, name);
+
     var feedbackOptions = {
-        pfx: application.ios.pfxData,
-        passphrase: application.ios.passphrase,
-        gateway: getEndpoint(application.production),
+        pfx: certificate.pfx,
+        passphrase: certificate.passphrase,
+        gateway: getEndpoint(certificate.production),
         port: 2196,
-        batchFeedback: application.production,
-        production: application.production,
+        batchFeedback: certificate.production,
+        production: certificate.production,
         interval: 3600
     };
 
@@ -68,16 +104,18 @@ function createFeedbackIfNeeded(application) {
 
     logger.debug(util.format("push devices: %s application: %s", application));
 
-    feedbacks[application.key] = feedback;
+    feedbacks[createApplicationNameLookupKey(application, name)] = feedback;
 
     feedback.on("error", function (feedbackErr) {
         logger.error(util.format("%s: feedback error %s", application.name, feedbackErr), feedbackErr);
-        delete feedbacks[application.key];
+        delete feedbacks[createApplicationNameLookupKey(application, name)];
     });
 }
 
-function wireService(application, service) {
-    if (!application.production) {
+function wireService(application, name, service) {
+    var certificate = getCertificateNamed(application, name);
+
+    if (!certificate.production) {
         service.on('transmitted', function (notification, device) {
             logger.info(util.format("%s notification transmitted to: %s", application.name, device.token.toString('hex')));
         });
@@ -91,8 +129,8 @@ function wireService(application, service) {
 
         if (errCode == 10) {
             logger.warn(util.format("%s got shutdown from APN", application.name));
-            delete feedbacks[application.key];
-            delete connections[application.key];
+            delete feedbacks[createApplicationNameLookupKey(application, name)];
+            delete connections[createApplicationNameLookupKey(application, name)];
         }
     });
 
@@ -118,20 +156,22 @@ function wireService(application, service) {
 /**
  *
  * @param {ApplicationModel} application
+ * @param {String} name
  * @returns apn.Connection
  *
  */
 
-function createConnectionIfNeeded(application) {
-    if (!connections[application.key]) {
-        var options = getOptions(application);
+function createConnectionIfNeeded(application, name) {
+
+    if (!connections[createApplicationNameLookupKey(application, name)]) {
+        var options = getOptions(application, name);
 
         logger.info(util.format("connection options %s", JSON.stringify(options)));
 
-        connections[application.key] = wireService(application, new apn.Connection(options));
+        connections[createApplicationNameLookupKey(application, name)] = wireService(application, name, new apn.Connection(options));
     }
 
-    return connections[application.key];
+    return connections[createApplicationNameLookupKey(application, name)];
 }
 
 /**
@@ -141,9 +181,9 @@ function createConnectionIfNeeded(application) {
  * @param {object} notification
  */
 var pushAppleNotification = function(application, device, notification) {
-    createFeedbackIfNeeded(application);
+    createFeedbackIfNeeded(application, device.ios_certificate_name);
 
-    var apnsConnection = createConnectionIfNeeded(application),
+    var apnsConnection = createConnectionIfNeeded(application, device.ios_certificate_name),
         message = buildMessage(notification, "ios", "payload", apn.Notification);
 
     apnsConnection.pushNotification(message, new apn.Device(device.token));

@@ -69,7 +69,7 @@ describe("application", function() {
     });
 
     it("update application", function(done) {
-        Application.create(applicationName, false, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ();
             })
@@ -117,8 +117,8 @@ describe("application", function() {
             });
     });
 
-    it("attach ios data", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+    it("attach ios data (invalid pfx)", function(done) {
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.save();
             })
@@ -129,7 +129,7 @@ describe("application", function() {
                     .type('form')
                     .field("passphrase", "passphrase")
                     .attach("pfx", 'test/data/fake_pfx.not.p12')
-                    .expect(200)
+                    .expect(400)
                     .end(function(err, res) {
                         should.not.exists(err);
                         should.exist(res);

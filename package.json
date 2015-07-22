@@ -26,7 +26,8 @@
     "request": "latest",
     "openssl-wrapper": "latest",
     "moment": "latest",
-    "node-forge": "latest"
+    "node-forge": "latest",
+    "lodash": "latest"
   },
   "devDependencies": {
     "debug": "latest",

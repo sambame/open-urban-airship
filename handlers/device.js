@@ -8,6 +8,7 @@ var DeviceModel = require("../models/device"),
     sinceToDate = require('../sinceToDate'),
     generalConfig = require("config").general,
     moment = require("moment"),
+    _ = require("lodash"),
     util = require("util");
 
 var supportedPlatforms = ["ios", "android", "test"];
@@ -41,7 +42,7 @@ var createDevice = function (req, res) {
     logger.info(util.format("%s createDevice %s on token %s", req.user.app.name, JSON.stringify(req.body), req.params.token || req.params.apid));
 
     var platform = req.body.platform;
-    if (platform && typeof platform !== "string") {
+    if (platform && _.isString(platform) === false) {
         return res.status(400).end();
     }
 
@@ -75,7 +76,7 @@ var createDevice = function (req, res) {
 
     var params = req.body;
 
-    Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags)
+    Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags, params.ios_certificate_name)
         .then(function(device) {
             if (!device) {
                 res.json({

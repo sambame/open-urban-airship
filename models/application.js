@@ -10,11 +10,21 @@ var ApplicationSchema = new Schema({
     name: { type: String, required: true },
     master_secret: { type: String, required: true, unique: true },
     secret: { type: String, required: true, unique: true },
-    production: Boolean,
     ios: {
         pfxData: Buffer,
         passphrase: String,
-        pushExpirationDate: Date
+        pushExpirationDate: Date,
+        production: Boolean,
+        sandbox: Boolean,
+
+        certificates: [{
+            key: String,
+            pfxData: Buffer,
+            passphrase: String,
+            pushExpirationDate: Date,
+            production: Boolean,
+            sandbox: Boolean
+        }]
     },
     android: {
         gcm_api_key: String

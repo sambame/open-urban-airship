@@ -2,22 +2,21 @@
 /*eslint-env node */
 "use strict";
 var ApplicationModel = require("../models/application"),
+	_ = require("lodash"),
 	promisify = require("../promisify");
 
 /**
  *
  * @param {string} name
- * @param {boolean} production
  * @param {string} key
  * @param {string} master_secret
  * @param {string} secret
  * @param {function} callback
  */
-var createApplication = function(name, production, key, master_secret, secret, callback) {
+var createApplication = function(name, key, master_secret, secret, callback) {
 	var application = new ApplicationModel();
 	application.name = name;
 
-	application.production = production;
 	application.master_secret = master_secret;
 	application.secret = secret;
 	application._id = key;
@@ -25,22 +24,41 @@ var createApplication = function(name, production, key, master_secret, secret, c
 	callback(null, application);
 };
 
-var createApplicationQ = function(name, production, key, master_secret, secret) {
+var createApplicationQ = function(name, key, master_secret, secret) {
 	var p = promisify(createApplication);
 
-	return p(name, production, key, master_secret, secret);
+	return p(name, key, master_secret, secret);
 };
 
 /**
  *
  * @param {ApplicationModel} application
- * @param {Buffer} pfxdata
- * @param {string} passphrase
- * @param {function} callback
+ * @param {Object} certificates
  */
-var configureIOS = function(application, pfxData, passphrase, callback) {
-	application.ios = {pfxData: pfxData, passphrase: passphrase};
-	application.save(callback);
+var configureIOS = function(application, certificates) {
+    _.forOwn(certificates, function(val, name) {
+        name = (name || "default").toLocaleLowerCase();
+
+        if (name === "default") {
+            application.ios = {pfxData: val.pfxData, passphrase: val.passphrase};
+        } else {
+            var indexOfPrevCertificate = _.findIndex(application.ios.certificates, function(certificate) {
+                return certificate.name.toLowerCase() === name;
+            });
+
+            var newCertificate = {pfxData: val.pfxData, passphrase: val.passphrase, name: name};
+
+            if (indexOfPrevCertificate === -1) {
+                application.ios.certificates.push(newCertificate);
+            } else {
+                if (_.isUndefined(val.pfxData)) {
+                    application.ios.certificates = application.ios.certificates.splice(index, indexOfPrevCertificate);
+                } else {
+                    application.ios.certificates[indexOfPrevCertificate] = newCertificate;
+                }
+            }
+        }
+    });
 };
 
 var getByKey = function(applicationKey) {

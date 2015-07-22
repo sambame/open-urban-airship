@@ -22,7 +22,8 @@ var iosTokenLength = 64,
         apid: {type: String, get: function() {return this._id;}},
         "created_at": {type: Date},
         "updated_at": {type: Date},
-        old_key: {type: String}
+        old_key: {type: String},
+        "ios_certificate_name": {type: String}
     });
 
 DeviceSchema.pre("save", function(next){

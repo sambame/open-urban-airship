@@ -45,7 +45,7 @@ describe("device", function() {
     });
 
     it("registers new device", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.save();
             })
@@ -68,7 +68,7 @@ describe("device", function() {
     });
 
     it("delete device (token)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ()
                     .then(function() {
@@ -94,7 +94,7 @@ describe("device", function() {
     });
 
     it("delete device (apid)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ()
                     .then(function() {
@@ -120,7 +120,7 @@ describe("device", function() {
     });
 
     it("update device (by apid)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ()
                     .then(function() {
@@ -146,7 +146,7 @@ describe("device", function() {
     });
 
     it("update device (by token)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ()
                     .then(function() {
@@ -172,7 +172,7 @@ describe("device", function() {
     });
 
     it("list devices", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.save();
             })
@@ -194,7 +194,7 @@ describe("device", function() {
     });
 
     it("feedback devices", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ()
                     .then(function() {

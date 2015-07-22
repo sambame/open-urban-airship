@@ -8,7 +8,7 @@ var ApplicationModel = require("../models/application"),
     util = require('util'),
     crypto = require("crypto"),
     async = require("async"),
-    Q = require('q'),
+    _ = require("lodash"),
     base64url = require('base64url'),
     validateP12 = require('../validateP12'),
     Application = require('../controllers/application');
@@ -19,58 +19,71 @@ var createSecureRandom = function(callback) {
     });
 };
 
+var addiOSCertificatesParams = function(application, params) {
+    if (application.ios._id) {
+        params.production = application.ios.production;
+        params.sandbox  = application.ios.sandbox;
+
+        if (application.ios.pushExpirationDate) {
+            params.pushExpirationDate = application.ios.pushExpirationDate.toISOString();
+        }
+
+        var currentCertificates = {};
+        _.forOwn(application.ios.certificate, function(certificate, name) {
+            currentCertificates[name] = {
+                production: certificate.production,
+                sandbox: certificate.sandbox,
+                pushExpirationDate: certificate.pushExpirationDate.toISOString()
+            }
+        });
+
+        params.certificates = currentCertificates;
+    }
+};
+
+var requestToIOSCertificates = function(req) {
+    var iosCertificates = {},
+        params = req.body;
+
+    if (params.ios_certificate) {
+        var passphrase = params.ios_certificate_password,
+            name = (params.ios_certificate_name || "default").toLowerCase();
+
+        iosCertificates[name] = {
+            pfx: new Buffer(params.ios_certificate, 'base64'),
+            passphrase: passphrase
+        };
+    } else if (params.ios_certificates) {
+        _.forOwn(params.ios_certificates, function(certificate, name) {
+            name = (certificate.name || "default").toLowerCase();
+
+            iosCertificates[name] = {
+                pfx: new Buffer(certificate.pfx, 'base64'),
+                passphrase: certificate.passphrase
+            }
+        });
+    }
+
+    return iosCertificates;
+};
+
 var updateApplication = function  (req, res) {
-    var params = req.body,
-        ios_certificate;
+    var params = req.body;
 
     var application = req.user.app;
 
-    function updateApp(pushExpirationDate) {
-        if (params.ios_certificate) {
-            application.ios.pfxData = ios_certificate;
-            application.ios.pushExpirationDate = pushExpirationDate;
-        }
-
-        if (params.ios_certificate_password) {
-            application.ios.passphrase = params.ios_certificate_password;
-        }
+    function updateApp(iosCertificates) {
+        Application.configureIOS(application, iosCertificates);
 
         if (params.gcm_api_key) {
             application.android.gcm_api_key = params.gcm_api_key;
         }
 
-        application.production = !!params.production;
-
-        function validateCertificateIfNeeded() {
-            var deferred = Q.defer();
-
-            if (application.ios.pfxData && application.ios.pfxData) {
-                validateP12(application.ios.pfxData, application.ios.passphrase, application.production)
-                    .then(function() {
-                        deferred.resolve();
-                    })
-                    .catch(function (err) {
-                        logger.info(util.format("failed to validate ios certificate: %s", err), err);
-
-                        deferred.reject(err);
-                    });
-            } else {
-                deferred.resolve();
-            }
-
-            return deferred.promise;
-        }
-
-        validateCertificateIfNeeded().
-            then(function() {
-                return application.saveQ();
-            })
+        return application.saveQ()
             .then(function(application) {
-                var params = {ok: true, key: application._id, name: application.name, production: application.production};
+                var params = {ok: true, key: application._id, name: application.name};
 
-                if (application.ios && application.ios.pushExpirationDate) {
-                    params.pushExpirationDate = application.ios.pushExpirationDate.toISOString();
-                }
+                addiOSCertificatesParams(application, params);
 
                 return res.json(params);
             })
@@ -85,32 +98,26 @@ var updateApplication = function  (req, res) {
             });
     }
 
-    if (params.ios_certificate) {
-        ios_certificate = new Buffer(params.ios_certificate, 'base64');
-        validateP12(ios_certificate, params.ios_certificate_password || application.ios.passphrase)
-            .then(function (expirationDate) {
-                updateApp(expirationDate);
+    var iosCertificates = requestToIOSCertificates(req);
+
+    validateP12(iosCertificates)
+        .then(function (iosCertificates) {
+            updateApp(iosCertificates);
+        })
+        .catch(function (err) {
+            logger.info(util.format("failed to validate ios certificate: %s", err), err);
+            res.status(400);
+            res.json({
+                ok: false,
+                err: err.message
             })
-            .catch(function (err) {
-                logger.info(util.format("failed to validate ios certificate: %s", err), err);
-                res.status(400);
-                res.json({
-                    ok: false,
-                    err: err.message
-                })
-            });
-    } else {
-        updateApp();
-    }
+        });
 };
 
 var createApplication = function (req, res) {
-    var params = req.body,
-        ios_certificate;
+    var params = req.body;
 
-    params.production = !!params.production;
-
-    function createApp(pushExpirationDate) {
+    function createApp(iosCertificates) {
         async.parallel(
             [
                 createSecureRandom,
@@ -118,15 +125,9 @@ var createApplication = function (req, res) {
                 createSecureRandom
             ],
             function (err, keys) {
-                Application.create(params.name, !!params.production, keys[0], keys[1], keys[2])
+                Application.create(params.name, keys[0], keys[1], keys[2])
                     .then(function (application) {
-                        if (params.ios_certificate) {
-                            application.ios = {
-                                pfxData: ios_certificate,
-                                passphrase: params.ios_certificate_password,
-                                pushExpirationDate: pushExpirationDate
-                            };
-                        }
+                        Application.configureIOS(application, iosCertificates);
 
                         return application;
                     })
@@ -162,23 +163,20 @@ var createApplication = function (req, res) {
         );
     }
 
-    if (params.ios_certificate) {
-        ios_certificate = new Buffer(params.ios_certificate, 'base64');
-        validateP12(ios_certificate, params.ios_certificate_password, params.production)
-            .then(function(expirationDate) {
-                createApp(expirationDate);
-            })
-            .catch(function(err) {
-                logger.error(util.format("failed to validate ios certificate %s", err), err);
-                res.status(400);
-                res.json({
-                    ok: false,
-                    err: err.message
-                })
+    var iosCertificates = requestToIOSCertificates(req);
+
+    validateP12(iosCertificates)
+        .then(function (iosCertificates) {
+            createApp(iosCertificates);
+        })
+        .catch(function(err) {
+            logger.error(util.format("failed to validate ios certificate %s", err), err);
+            res.status(400);
+            res.json({
+                ok: false,
+                err: err.message
             });
-    } else {
-        createApp();
-    }
+        });
 };
 
 var listApplications = function (req, res) {
@@ -237,9 +235,27 @@ var configureIOS = function(req, res) {
                 fs.readFile(req.files.pfx.path, callback);
             },
             function(data, callback) {
-                Application.configureIOS(req.user.app, data, req.body.passphrase, function(err) {
-                    callback(err);
-                });
+                var name = req.body.name || "default",
+                    application = req.user.app,
+                    iosCertificates = {};
+
+                iosCertificates[name] = {pfx: data, passphrase: req.body.passphrase};
+
+                validateP12(iosCertificates)
+                    .then(function(iosCertificates) {
+                        Application.configureIOS(application, iosCertificates);
+
+                        application.save(function(err) {
+                            callback(err);
+                        })
+                    })
+                    .catch(function(err) {
+                        res.status(400);
+                        res.json({
+                            ok: false,
+                            err: err.message
+                        });
+                    });
             },
             function(callback) {
                 fs.unlink(req.files.pfx.path, callback);

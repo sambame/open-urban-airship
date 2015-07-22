@@ -56,8 +56,8 @@ describe("device", function() {
     it("getAudience two apps same alias", function(done) {
         Q.all(
             [
-                Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret),
-                Application.create(applicationName2, true, applicationKey2, applicationMasterSecret2, applicationSecret2)
+                Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret),
+                Application.create(applicationName2, applicationKey2, applicationMasterSecret2, applicationSecret2)
             ])
             .then(function(applications) {
                 return Device.createOrUpdate(applications[0], null, devicePlatform, deviceToken, deviceAlias)
@@ -88,7 +88,7 @@ describe("device", function() {
     });
 
     it("getAudience (token)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
                     .then(function() {
@@ -105,7 +105,7 @@ describe("device", function() {
     });
 
     it("getAudience (token case insensitive)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
                     .then(function() {
@@ -125,7 +125,7 @@ describe("device", function() {
         veryLongDeviceToken.should.not.equal(veryLongDeviceToken.toLowerCase());
         veryLongDeviceToken.should.not.equal(veryLongDeviceToken.toUpperCase());
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 Device.createOrUpdate(application, null, devicePlatform, veryLongDeviceToken)
                     .then(function() {
@@ -142,7 +142,7 @@ describe("device", function() {
     });
 
     it("getAudience (token long)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 Device.createOrUpdate(application, null, devicePlatform, veryLongDeviceToken)
                     .then(function() {
@@ -159,7 +159,7 @@ describe("device", function() {
     });
 
     it("getAudience (apid)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 Device.createOrUpdate(application, null, devicePlatform, deviceToken)
                     .then(function(device) {
@@ -176,7 +176,7 @@ describe("device", function() {
     });
 
     it("getAudience (alias)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
                     .then(function(device) {
@@ -193,7 +193,7 @@ describe("device", function() {
     });
 
     it("getAudience (alias multi)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Q.all(
                     [
@@ -217,7 +217,7 @@ describe("device", function() {
     });
 
     it("delete (token)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
                     .then(function (device) {
@@ -245,7 +245,7 @@ describe("device", function() {
     });
 
     it("delete (apid)", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, devicePlatform, deviceToken)
                     .then(function (device) {

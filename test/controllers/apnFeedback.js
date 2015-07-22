@@ -44,7 +44,7 @@ describe("apn Feedback", function() {
     });
 
     it("test simple Feedback", function(done) {
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return Device.createOrUpdate(application, null, "ios", "af4c5dc2aa94184b6ec953f43ad9374eb675019ac18a09cbe2f136ae0bc9")
                     .then(function(device) {

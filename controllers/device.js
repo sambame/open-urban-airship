@@ -13,8 +13,9 @@ var DeviceModel = require("../models/device"),
  * @param {string} token
  * @param {string} [alias]
  * @param {Array} [tags]
+ * @param {String} [ios_certificate_name]
  */
-var createOrUpdateDevice = function(application, apid, platform, token, alias, tags) {
+var createOrUpdateDevice = function(application, apid, platform, token, alias, tags, ios_certificate_name) {
 	if (DeviceModel.isCaseInsensitiveToken(token)) {
         token = token.toUpperCase();
     }
@@ -55,10 +56,13 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
 
     updateParams.$set.active = true;
     updateParams.updated_at = currentTime;
+    if (ios_certificate_name) {
+        updateParams.ios_certificate_name = ios_certificate_name;
+    }
 
     if (alias) {
         // the the previously registered alias
-        return DeviceModel.updateQ({alias: alias,  _application: application._id}, {$unset: {alias: ""}}, {multiple: true})
+        return DeviceModel.updateQ({alias: alias, _application: application._id}, {$unset: {alias: ""}}, {multiple: true})
             .then(function() {
                 return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
             })
