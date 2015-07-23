@@ -38,7 +38,7 @@ var addiOSCertificatesParams = function(application, params) {
         var currentCertificates = {};
 
         if (_.keys(defaultCertificate).length > 0) {
-            currentCertificates["default"] = currentCertificates;
+            currentCertificates["default"] = defaultCertificate;
         }
 
         _.forEach(application.ios.certificates, function(certificate) {
