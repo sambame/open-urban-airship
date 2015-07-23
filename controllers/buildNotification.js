@@ -5,6 +5,8 @@
 var fixAndroidNotificationParams = function(message) {
     message.notification = message.notification || {};
 
+    message.data = message.data || {};
+
     if (message.alert) {
         if (message.alert["loc-key"]) {
             message.notification["body_loc_key"] = message.alert["loc-key"];
