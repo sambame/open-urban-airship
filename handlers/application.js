@@ -20,24 +20,41 @@ var createSecureRandom = function(callback) {
 };
 
 var addiOSCertificatesParams = function(application, params) {
-    if (application.ios._id) {
-        params.production = application.ios.production;
-        params.sandbox  = application.ios.sandbox;
+    if (application.ios) {
+        var defaultCertificate = {};
+
+        if (!_.isUndefined(application.ios.production)) {
+            defaultCertificate.production = application.ios.production;
+        }
+
+        if (!_.isUndefined(application.ios.sandbox)) {
+            defaultCertificate.sandbox = application.ios.sandbox;
+        }
 
         if (application.ios.pushExpirationDate) {
-            params.pushExpirationDate = application.ios.pushExpirationDate.toISOString();
+            defaultCertificate.pushExpirationDate = application.ios.pushExpirationDate.toISOString();
         }
 
         var currentCertificates = {};
-        _.forOwn(application.ios.certificate, function(certificate, name) {
-            currentCertificates[name] = {
-                production: certificate.production,
-                sandbox: certificate.sandbox,
-                pushExpirationDate: certificate.pushExpirationDate.toISOString()
+
+        if (_.keys(defaultCertificate).length > 0) {
+            currentCertificates["default"] = currentCertificates;
+        }
+
+        _.forEach(application.ios.certificates, function(certificate) {
+            currentCertificates[certificate.name] = {
+                production: !!certificate.production,
+                sandbox: !!certificate.sandbox
+            };
+
+            if (certificate.pushExpirationDate) {
+                currentCertificates[certificate.name].pushExpirationDate = certificate.pushExpirationDate.toISOString();
             }
         });
 
-        params.certificates = currentCertificates;
+        if (_.keys(currentCertificates).length > 0) {
+            params.certificates = currentCertificates;
+        }
     }
 };
 
@@ -50,12 +67,12 @@ var requestToIOSCertificates = function(req) {
             name = (params.ios_certificate_name || "default").toLowerCase();
 
         iosCertificates[name] = {
-            pfx: new Buffer(params.ios_certificate, 'base64'),
+            pfx: new Buffer(params.ios_certificate, "base64"),
             passphrase: passphrase
         };
     } else if (params.ios_certificates) {
         _.forOwn(params.ios_certificates, function(certificate, name) {
-            name = (certificate.name || "default").toLowerCase();
+            name = name.toLowerCase();
 
             iosCertificates[name] = {
                 pfx: new Buffer(certificate.pfx, 'base64'),
@@ -85,13 +102,13 @@ var updateApplication = function  (req, res) {
 
                 addiOSCertificatesParams(application, params);
 
-                return res.json(params);
+                res.json(params);
             })
             .catch(function(err) {
                 logger.error(util.format("failed to save application"), err);
                 res.status(500);
 
-                return res.json({
+                res.json({
                     ok: false,
                     err: err.message
                 })
@@ -144,12 +161,16 @@ var createApplication = function (req, res) {
                         return application.saveQ();
                     })
                     .then(function (application) {
-                        res.json({
+                        var params = {
                             ok: true,
                             master_secret: application.master_secret,
                             secret: application.secret,
                             key: application.key
-                        });
+                        };
+
+                        addiOSCertificatesParams(application, params);
+
+                        res.json(params);
                     })
                     .catch(function (err) {
                         logger.error(util.format("failed to create app %s", err), err);

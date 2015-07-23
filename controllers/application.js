@@ -37,22 +37,32 @@ var createApplicationQ = function(name, key, master_secret, secret) {
  */
 var configureIOS = function(application, certificates) {
     _.forOwn(certificates, function(val, name) {
-        name = (name || "default").toLocaleLowerCase();
+        name = name.toLocaleLowerCase();
 
         if (name === "default") {
-            application.ios = {pfxData: val.pfxData, passphrase: val.passphrase};
+            application.ios.pfxData = val.pfx;
+            application.ios.passphrase = val.passphrase;
+            application.ios.production = val.production;
+            application.ios.sandbox = val.sandbox;
+            application.ios.pushExpirationDate = val.pushExpirationDate;
         } else {
             var indexOfPrevCertificate = _.findIndex(application.ios.certificates, function(certificate) {
                 return certificate.name.toLowerCase() === name;
             });
 
-            var newCertificate = {pfxData: val.pfxData, passphrase: val.passphrase, name: name};
+            var newCertificate = {
+                production: val.production,
+                sandbox: val.sandbox,
+                pushExpirationDate: val.pushExpirationDate,
+                pfxData: val.pfx,
+                passphrase: val.passphrase,
+                name: name};
 
             if (indexOfPrevCertificate === -1) {
                 application.ios.certificates.push(newCertificate);
             } else {
-                if (_.isUndefined(val.pfxData)) {
-                    application.ios.certificates = application.ios.certificates.splice(index, indexOfPrevCertificate);
+                if (_.isUndefined(val.pfx)) {
+                    application.ios.certificates.splice(indexOfPrevCertificate, 1);
                 } else {
                     application.ios.certificates[indexOfPrevCertificate] = newCertificate;
                 }

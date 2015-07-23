@@ -25,13 +25,13 @@ function validateP12(certificates) {
                 var certificate = parsed.certificates[0],
                     validity = certificate.validity();
 
-                certificateData.sandbox = certificate.environment().sandbox;
-                certificateData.producation = certificate.environment().producation;
+                certificateData.sandbox = !!certificate.environment().sandbox;
+                certificateData.producation = !!certificate.environment().producation;
                 certificateData.pushExpirationDate = validity.notAfter;
                 certificateData.name = name;
 
                 return certificateData;
-            })
+            });
 
         futures.push(q);
     });

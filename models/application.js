@@ -18,7 +18,7 @@ var ApplicationSchema = new Schema({
         sandbox: Boolean,
 
         certificates: [{
-            key: String,
+            name: String,
             pfxData: Buffer,
             passphrase: String,
             pushExpirationDate: Date,

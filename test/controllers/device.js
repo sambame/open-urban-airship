@@ -53,6 +53,36 @@ describe("device", function() {
         mongoose.disconnect();
     });
 
+    describe("multi certificate", function() {
+        var certificate1 = "not default",
+            pfxBuffer1 = "pfxBuffer1",
+            certificate1Passpharse = "certificate1Passpharse";
+
+        it("device from multi certificate", function(done) {
+            Application.create(applicationName2, applicationKey2, applicationMasterSecret2, applicationSecret2)
+                .then(function(application) {
+                    var certificates = {};
+
+                    certificates[certificate1] = {pfx: new Buffer(pfxBuffer1), passphrase: certificate1Passpharse};
+
+                    Application.configureIOS(application, certificates);
+
+                    return application;
+                })
+                .then(function(application) {
+                    return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias, null, certificate1);
+                })
+                .then(function(device) {
+                    should.exists(device.ios_certificate_name);
+                    device.ios_certificate_name.should.equal(certificate1);
+                })
+                .then(done)
+                .catch(function(err) {
+                    done(err);
+                });
+        });
+    });
+
     it("getAudience two apps same alias", function(done) {
         Q.all(
             [
@@ -271,4 +301,5 @@ describe("device", function() {
                 done(err);
             });
     });
+
 });
