@@ -3,6 +3,7 @@
 "use strict";
 
 var mongoose = require("mongoose-q")(require("mongoose")),
+    _ = require("lodash"),
     Schema = mongoose.Schema;
 
 var ApplicationSchema = new Schema({
@@ -33,4 +34,24 @@ var ApplicationSchema = new Schema({
     old_key: {type: String}
 });
 
-module.exports = mongoose.model('Application', ApplicationSchema);
+
+var ApplicationModel = mongoose.model('Application', ApplicationSchema);
+
+/**
+ *
+ * @param {String} name
+ * @returns {Number}
+ */
+ApplicationModel.prototype.indexOfCertificate = function(name) {
+    if (!name) {
+        return -1;
+    }
+
+    name = name.toLocaleString();
+
+    return _.findIndex((this.ios.certificates || []), function(certificate) {
+        return certificate.name.toLowerCase() === name;
+    });
+};
+
+module.exports = ApplicationModel;

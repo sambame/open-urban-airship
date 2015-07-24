@@ -94,7 +94,7 @@ var createDevice = function (req, res) {
         })
         .catch(function(err) {
             logger.error(util.format("%s failed to createOrUpdate (apid: %s, token: %s) device %s", req.user.app.name, apid, deviceToken, err), err);
-            return res.status(500).json({
+            return res.status(400).json({
                 message: err.message,
                 ok: false
             });

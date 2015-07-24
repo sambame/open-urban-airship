@@ -24,12 +24,11 @@ function getCertificateNamed(application, name) {
         return {pfx: application.ios.pfxData, passphrase: application.ios.passphrase, production: production};
     }
 
-    var certificateIndex =  _.findIndex(application.ios.certificates, function(certificate) {
-        return certificate.name === name.toLocaleLowerCase();
-    });
+    var certificateIndex = application.indexOfCertificate(name);
 
     if (certificateIndex === -1) {
-        return {};
+        logger.error(util.format("%s certificate %s not found %s", application.name, name));
+        return null;
     }
 
     var selectedCertificate = application.ios.certificates[certificateIndex];
@@ -38,6 +37,10 @@ function getCertificateNamed(application, name) {
 
 function getOptions(application, name) {
     var certificate = getCertificateNamed(application, name);
+
+    if (!certificate) {
+        return null;
+    }
 
     return {
         pfx: certificate.pfx,
@@ -62,6 +65,20 @@ function createApplicationNameLookupKey(application, name) {
     return application.key + "$$$" + name;
 }
 
+function createFeedbackService(pfx, passphrase, production) {
+    var feedbackOptions = {
+        pfx: pfx,
+        passphrase: passphrase,
+        gateway: getEndpoint(production),
+        port: 2196,
+        batchFeedback: production,
+        production: production,
+        interval: 3600
+    };
+
+    return new apn.Feedback(feedbackOptions);
+}
+
 /**
  *
  * @param application
@@ -74,17 +91,11 @@ function createFeedbackIfNeeded(application, name) {
 
     var certificate = getCertificateNamed(application, name);
 
-    var feedbackOptions = {
-        pfx: certificate.pfx,
-        passphrase: certificate.passphrase,
-        gateway: getEndpoint(certificate.production),
-        port: 2196,
-        batchFeedback: certificate.production,
-        production: certificate.production,
-        interval: 3600
-    };
+    if (!certificate) {
+        return null;
+    }
 
-    var feedback = new apn.Feedback(feedbackOptions);
+    var feedback = createFeedbackService(certificate.pfx, certificate.passphrase, certificate.production);
 
     if (application.production) {
         feedback.on("feedback", function (devicesAndTimes) {
@@ -162,16 +173,21 @@ function wireService(application, name, service) {
  */
 
 function createConnectionIfNeeded(application, name) {
+    var key = createApplicationNameLookupKey(application, name);
 
-    if (!connections[createApplicationNameLookupKey(application, name)]) {
+    if (!connections[key]) {
         var options = getOptions(application, name);
+
+        if (!options) {
+            return null;
+        }
 
         logger.info(util.format("connection options %s", JSON.stringify(options)));
 
-        connections[createApplicationNameLookupKey(application, name)] = wireService(application, name, new apn.Connection(options));
+        connections[key] = wireService(application, name, new apn.Connection(options));
     }
 
-    return connections[createApplicationNameLookupKey(application, name)];
+    return connections[key];
 }
 
 /**
@@ -186,10 +202,15 @@ var pushAppleNotification = function(application, device, notification) {
     var apnsConnection = createConnectionIfNeeded(application, device.ios_certificate_name),
         message = buildMessage(notification, "ios", "payload", apn.Notification);
 
+    if (!apnsConnection) {
+        return;
+    }
+
     apnsConnection.pushNotification(message, new apn.Device(device.token));
 };
 
 module.exports = {
     push: pushAppleNotification,
+    createFeedbackService: createFeedbackService,
     deactivateDevice: deactivateDevice
 };

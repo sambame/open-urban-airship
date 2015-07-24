@@ -56,6 +56,7 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
 
     updateParams.$set.active = true;
     updateParams.updated_at = currentTime;
+
     if (iosCertificateName) {
         updateParams.ios_certificate_name = iosCertificateName;
     }

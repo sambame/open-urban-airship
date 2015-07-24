@@ -46,17 +46,14 @@ var configureIOS = function(application, certificates) {
             application.ios.sandbox = val.sandbox;
             application.ios.pushExpirationDate = val.pushExpirationDate;
         } else {
-            var indexOfPrevCertificate = _.findIndex(application.ios.certificates, function(certificate) {
-                return certificate.name.toLowerCase() === name;
-            });
-
-            var newCertificate = {
-                production: val.production,
-                sandbox: val.sandbox,
-                pushExpirationDate: val.pushExpirationDate,
-                pfxData: val.pfx,
-                passphrase: val.passphrase,
-                name: name};
+            var indexOfPrevCertificate = application.indexOfCertificate(name),
+                newCertificate = {
+                    production: val.production,
+                    sandbox: val.sandbox,
+                    pushExpirationDate: val.pushExpirationDate,
+                    pfxData: val.pfx,
+                    passphrase: val.passphrase,
+                    name: name};
 
             if (indexOfPrevCertificate === -1) {
                 application.ios.certificates.push(newCertificate);
