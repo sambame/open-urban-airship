@@ -115,7 +115,6 @@ function authenticate() {
 
 app.use(passport.initialize());
 app.use(bodyParser.json());
-app.use(multer({ dest: './uploads/'}))
 
 function healthCheck(req, res) {
     res.end();
@@ -144,7 +143,7 @@ app.map({
                     get: [authenticate(), application.list],
                     '/services': {
                         '/ios': {
-                            put: [authenticate(), application.configureIOS]
+                            put: [authenticate(), multer({ dest: './uploads/'}).single("pfx"), application.configureIOS]
                         }
                     }
                 },

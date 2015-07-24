@@ -54,7 +54,7 @@ describe("device", function() {
             }
         );
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ();
             })
@@ -89,7 +89,7 @@ describe("device", function() {
             }
         );
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ();
             })
@@ -124,7 +124,7 @@ describe("device", function() {
             }
         );
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ();
             })
@@ -160,7 +160,7 @@ describe("device", function() {
             }
         );
 
-        Application.create(applicationName, true, applicationKey, applicationMasterSecret, applicationSecret)
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
                 return application.saveQ()
                     .then(function() {
