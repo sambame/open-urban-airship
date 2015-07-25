@@ -31,7 +31,7 @@ function getCertificateNamed(application, name) {
         return null;
     }
 
-    var selectedCertificate = application.ios.certificates[certificateIndex];
+    var selectedCertificate = application.ios_certificates[certificateIndex];
     return {pfx: selectedCertificate.pfxData, passphrase: selectedCertificate.passphrase, production: selectedCertificate.production};
 }
 

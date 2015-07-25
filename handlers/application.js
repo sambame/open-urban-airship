@@ -41,7 +41,7 @@ var addiOSCertificatesParams = function(application, params) {
             currentCertificates["default"] = defaultCertificate;
         }
 
-        _.forEach(application.ios.certificates, function(certificate) {
+        _.forEach(application.ios_certificates, function(certificate) {
             currentCertificates[certificate.name] = {
                 production: !!certificate.production,
                 sandbox: !!certificate.sandbox

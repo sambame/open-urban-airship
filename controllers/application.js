@@ -2,6 +2,7 @@
 /*eslint-env node */
 "use strict";
 var ApplicationModel = require("../models/application"),
+    iOSCertificateModel = require("../models/iOSCertificate"),
 	_ = require("lodash"),
 	promisify = require("../promisify");
 
@@ -47,21 +48,22 @@ var configureIOS = function(application, certificates) {
             application.ios.pushExpirationDate = val.pushExpirationDate;
         } else {
             var indexOfPrevCertificate = application.indexOfCertificate(name),
-                newCertificate = {
-                    production: val.production,
-                    sandbox: val.sandbox,
-                    pushExpirationDate: val.pushExpirationDate,
-                    pfxData: val.pfx,
-                    passphrase: val.passphrase,
-                    name: name};
+                newCertificate = new iOSCertificateModel();
+
+            newCertificate.production = val.production;
+            newCertificate.sandbox = val.sandbox;
+            newCertificate.pushExpirationDate = val.pushExpirationDate;
+            newCertificate.pfxData = val.pfx;
+            newCertificate.passphrase = val.passphrase;
+            newCertificate.name = name;
 
             if (indexOfPrevCertificate === -1) {
-                application.ios.certificates.push(newCertificate);
+                application.ios_certificates.push(newCertificate);
             } else {
                 if (_.isUndefined(val.pfx)) {
-                    application.ios.certificates.splice(indexOfPrevCertificate, 1);
+                    application.ios_certificates.splice(indexOfPrevCertificate, 1);
                 } else {
-                    application.ios.certificates[indexOfPrevCertificate] = newCertificate;
+                    application.ios_certificates[indexOfPrevCertificate] = newCertificate;
                 }
             }
         }

@@ -98,9 +98,9 @@ describe("application", function() {
                     should.not.exists(application.ios.pfxData);
                     should.not.exists(application.ios.passphrase);
 
-                    application.ios.certificates.length.should.equal(1);
-                    application.ios.certificates[0].name.should.equal(certificate1);
-                    application.ios.certificates[0].passphrase.should.equal(certificate1Passpharse);
+                    application.ios_certificates.length.should.equal(1);
+                    application.ios_certificates[0].name.should.equal(certificate1);
+                    application.ios_certificates[0].passphrase.should.equal(certificate1Passpharse);
                 })
                 .then(done)
                 .catch(function (err) {
@@ -131,9 +131,9 @@ describe("application", function() {
                     should.exists(application.ios.pfxData);
                     should.exists(application.ios.passphrase);
 
-                    application.ios.certificates.length.should.equal(1);
-                    application.ios.certificates[0].name.should.equal(certificate2);
-                    application.ios.certificates[0].passphrase.should.equal(certificate2Passpharse);
+                    application.ios_certificates.length.should.equal(1);
+                    application.ios_certificates[0].name.should.equal(certificate2);
+                    application.ios_certificates[0].passphrase.should.equal(certificate2Passpharse);
                 })
                 .then(done)
                 .catch(function (err) {
@@ -161,7 +161,7 @@ describe("application", function() {
                     should.not.exists(application.ios.pfxData);
                     should.not.exists(application.ios.passphrase);
 
-                    application.ios.certificates.length.should.equal(2);
+                    application.ios_certificates.length.should.equal(2);
                 })
                 .then(done)
                 .catch(function (err) {
@@ -190,9 +190,9 @@ describe("application", function() {
                     certificates[certificate1] = {};
                     Application.configureIOS(application, certificates);
 
-                    application.ios.certificates.length.should.equal(1);
-                    application.ios.certificates[0].name.should.equal(certificate2);
-                    application.ios.certificates[0].passphrase.should.equal(certificate2Passpharse);
+                    application.ios_certificates.length.should.equal(1);
+                    application.ios_certificates[0].name.should.equal(certificate2);
+                    application.ios_certificates[0].passphrase.should.equal(certificate2Passpharse);
                 })
                 .then(done)
                 .catch(function (err) {
@@ -221,7 +221,7 @@ describe("application", function() {
                     certificates[certificate1] = {pfx: new Buffer(pfxBuffer1), passphrase: certificate3Passpharse};
                     Application.configureIOS(application, certificates);
 
-                    application.ios.certificates.length.should.equal(2);
+                    application.ios_certificates.length.should.equal(2);
                 })
                 .then(done)
                 .catch(function (err) {

@@ -4,6 +4,7 @@
 
 var mongoose = require("mongoose-q")(require("mongoose")),
     _ = require("lodash"),
+    iOSCertificateSchema = require("./iOSCertificate"),
     Schema = mongoose.Schema;
 
 var ApplicationSchema = new Schema({
@@ -16,17 +17,9 @@ var ApplicationSchema = new Schema({
         passphrase: String,
         pushExpirationDate: Date,
         production: Boolean,
-        sandbox: Boolean,
-
-        certificates: [{
-            name: String,
-            pfxData: Buffer,
-            passphrase: String,
-            pushExpirationDate: Date,
-            production: Boolean,
-            sandbox: Boolean
-        }]
+        sandbox: Boolean
     },
+    ios_certificates: [iOSCertificateSchema.schema],
     android: {
         gcm_api_key: String
     },
@@ -49,7 +42,7 @@ ApplicationModel.prototype.indexOfCertificate = function(name) {
 
     name = name.toLocaleString();
 
-    return _.findIndex((this.ios.certificates || []), function(certificate) {
+    return _.findIndex((this.ios_certificates || []), function(certificate) {
         return certificate.name.toLowerCase() === name;
     });
 };
