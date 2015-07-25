@@ -26,7 +26,7 @@ function validateP12(certificates) {
                     validity = certificate.validity();
 
                 certificateData.sandbox = !!certificate.environment().sandbox;
-                certificateData.producation = !!certificate.environment().producation;
+                certificateData.production = !!certificate.environment().production;
                 certificateData.pushExpirationDate = validity.notAfter;
                 certificateData.name = name;
 
