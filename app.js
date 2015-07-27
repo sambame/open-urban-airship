@@ -90,9 +90,6 @@ passport.use(new BasicStrategy(
                     return done(null, false);
                 }
 
-                logger.debug('application found: %s (%s)', app, err);
-                logger.debug('%s, %s', app.master_secret, secret);
-
                 if (app.master_secret !== secret && app.secret != secret) {
                     return done(null, false);
                 }

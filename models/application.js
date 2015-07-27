@@ -10,6 +10,7 @@ var mongoose = require("mongoose-q")(require("mongoose")),
 var ApplicationSchema = new Schema({
     _id: {type: String },
     name: { type: String, required: true },
+    production: Boolean, // deprecated
     master_secret: { type: String, required: true, unique: true },
     secret: { type: String, required: true, unique: true },
     ios: {
