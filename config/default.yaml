@@ -1,4 +1,5 @@
 general:
+  verboseDebug: true
   masterKey: 'not a real key this should be replaced!'
   masterSecret: 'not a real secret this should be replaced!'
   maxFeedbackDaysBack: 45

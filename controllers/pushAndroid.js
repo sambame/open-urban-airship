@@ -4,6 +4,7 @@
 var logger = require("../logger"),
     util = require("util"),
     gcm = require("node-gcm"),
+    generalConfig = require("config").general,
     DeviceModel = require("../models/device"),
     buildMessage = require("./buildNotification");
 
@@ -56,6 +57,10 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
     var message = buildMessage(notification, device.platform, "data", gcm.Message),
         registrationIds = [device.token];
 
+    if (generalConfig.verboseDebug) {
+        logger.info(util.format("%s sending gcm message %s", application.name, JSON.stringify(message)));
+    }
+
     gcmSender.send(message, registrationIds, retryCount, function (err, result) {
         if (result && result.failure) {
             if (checkIfUninstall(result.results)) {
@@ -77,7 +82,7 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
             var switchedToken = checkIfSwitchedToken(result.results);
 
             if (switchedToken) {
-                logger.info(util.format("%s: token switched %s => %s", application.name, device.token, switchedToken))
+                logger.info(util.format("%s: token switched %s => %s", application.name, device.token, switchedToken));
                 DeviceModel.updateQ({_id: device._id}, {$set: {token: switchedToken}})
                     .then(function() {
                         // resend
@@ -88,7 +93,7 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
                         callback(err);
                     })
             } else {
-                logger.info(util.format("%s finish sending to token: %s alias: %s - %s", application.name, device.token, device.alias, JSON.stringify(result)))
+                logger.info(util.format("%s finish sending to token: %s alias: %s - %s", application.name, device.token, device.alias, JSON.stringify(result)));
             }
         }
 
