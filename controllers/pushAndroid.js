@@ -59,7 +59,7 @@ var pushAndroidNotificationUsingSender = function(gcmSender, application, device
     gcmSender.send(message, registrationIds, retryCount, function (err, result) {
         if (result && result.failure) {
             if (checkIfUninstall(result.results)) {
-                logger.info(util.format("%s device %s alias: %s has unregister, deactivation it", application.name, device.token, device.alias));
+                logger.info(util.format("%s device %s alias: %s has unregister, deactivation it (thru gcm result)", application.name, device.token, device.alias));
                 DeviceModel.deactivateByToken(application, device.token)
                     .then(function() {
                         if (callback) {
