@@ -121,7 +121,7 @@ describe("androidPush", function() {
 
         Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
             .then(function(application) {
-                return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias)
+                return Device.createOrUpdate(application, null, "android", deviceToken, deviceAlias)
                     .then(function(device) {
                         device.token.should.equal(deviceToken.toUpperCase());
                         return device.saveQ();

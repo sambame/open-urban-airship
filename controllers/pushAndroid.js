@@ -53,14 +53,14 @@ var checkIfSwitchedToken = function(results) {
 
 var pushAndroidNotificationUsingSender = function(gcmSender, application, device, notification, callback) {
     // create a message with default values
-    var message = buildMessage(notification, "android", "data", gcm.Message),
+    var message = buildMessage(notification, device.platform, "data", gcm.Message),
         registrationIds = [device.token];
 
     gcmSender.send(message, registrationIds, retryCount, function (err, result) {
         if (result && result.failure) {
             if (checkIfUninstall(result.results)) {
                 logger.info(util.format("%s device %s alias: %s has unregister, deactivation it (thru gcm result)", application.name, device.token, device.alias));
-                DeviceModel.deactivateByToken(application, device.token)
+                DeviceModel.deactivateByAPID(application, device.apid)
                     .then(function() {
                         if (callback) {
                             callback(err, result);

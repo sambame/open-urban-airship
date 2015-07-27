@@ -66,10 +66,6 @@ var createDevice = function (req, res) {
         }
     }
 
-    if (DeviceModel.isGCMToken(deviceToken)) {
-        platform = "android";
-    }
-
     if (deviceToken && platform === "ios") {
         deviceToken = deviceToken.toLowerCase();
     }

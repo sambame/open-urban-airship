@@ -27,7 +27,8 @@ var push = function(application, audience, notification) {
 
                 activeDevices.push(currentDevice);
 
-                minioc.get("push-" + currentDevice.platform).push(application, currentDevice, notification);
+                var platform = currentDevice.actual_platform || currentDevice.platform;
+                minioc.get("push-" + platform).push(application, currentDevice, notification);
 
                 logger.info(util.format("%s: sending push notification %s to %s alias %s", application.name, JSON.stringify(notification), devices[i].apid, devices[i].alias || "(not defined)"));
             }
