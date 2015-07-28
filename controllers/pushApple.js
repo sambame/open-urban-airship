@@ -200,7 +200,7 @@ var pushAppleNotification = function(application, device, notification) {
     createFeedbackIfNeeded(application, device.ios_certificate_name);
 
     var apnsConnection = createConnectionIfNeeded(application, device.ios_certificate_name),
-        message = buildMessage(notification, "ios", "payload", apn.Notification);
+        message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
 
     if (!apnsConnection) {
         return;

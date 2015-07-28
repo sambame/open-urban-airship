@@ -73,7 +73,7 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
                 return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
             })
     } else {
-        return  DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
+        return DeviceModel.findOneAndUpdateQ(updateQueryParams, updateParams, {upsert: upsert, new: true});
     }
 };
 

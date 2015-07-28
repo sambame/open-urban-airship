@@ -10,13 +10,13 @@ var push = function(application, audience, notification) {
     return Device.getByAudience(application, audience)
         .then(function(devices) {
             if (devices.length === 0) {
-                logger.warn(util.format("no device found for %s application key %s", JSON.stringify(audience), application._id));
+                logger.warn(util.format("%s no device found for %s application key %s", application.name, JSON.stringify(audience), application._id));
             }
 
             var inactiveDevices = [],
                 activeDevices = [];
 
-            for (var i=0;i<devices.length;i++) {
+            for (var i=0; i <devices.length; i++) {
                 var currentDevice = devices[i];
 
                 if (!currentDevice.active) {

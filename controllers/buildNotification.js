@@ -1,6 +1,7 @@
 /*jslint node: true */
 /*eslint-env node */
 "use strict";
+var _ = require("lodash");
 
 var fixAndroidNotificationParams = function(message) {
     message.notification = message.notification || {};
@@ -30,7 +31,7 @@ var fixAndroidNotificationParams = function(message) {
         } else {
             message.notification.body = message.data.alert;
         }
-        delete message.alert;
+        delete message.data.alert;
     }
 
     if (message.notification.alert) {
@@ -101,6 +102,21 @@ var fixAndroidNotificationParams = function(message) {
     if ((message.notification || {}).sound) {
         message.notification.sound = "default";
     }
+
+    if (message["content-available"]) {
+        message.contentAvailable = message["content-available"] ? true : false;
+        delete message["content-available"];
+    }
+
+    if (message.data["content-available"]) {
+        message.contentAvailable = message.data["content-available"] ? true : false;
+        delete message.data["content-available"];
+    }
+
+    if (message.notification["content-available"]) {
+        message.contentAvailable = message.notification["content-available"] ? true : false;
+        delete message.notification["content-available"];
+    }
 };
 
 function fixiOSNotificationParams(notification) {
@@ -114,12 +130,13 @@ function fixiOSNotificationParams(notification) {
 /**
  *
  * @param {object} notification
+ * @param {string} dataPlatform
  * @param {string} platform
  * @param {function} platformNotificationClass
  * @param {string} platformDataKey
  * @returns {object}
  */
-function buildMessage(notification, platform, platformDataKey, platformNotificationClass) {
+function buildMessage(notification, dataPlatform, platform, platformDataKey, platformNotificationClass) {
     function isReservedProperty(propertyName) {
         var properties = {
             android: 1,
@@ -136,51 +153,48 @@ function buildMessage(notification, platform, platformDataKey, platformNotificat
 
     var msg = new platformNotificationClass();
 
-    for (var key in notification) {
-        if (!notification.hasOwnProperty(key)) {
-            continue;
-        }
-
+    _.forOwn(notification, function(val, key) {
         if (isReservedProperty(key)) {
-            continue;
+            return;
         }
 
-        msg[key] = notification[key];
-    }
+        msg[key] = val;
+    });
 
-    var platformOverride = notification[platform] || {};
+    var platformOverride = notification[dataPlatform] || {};
 
-    for (var platformOverrideKey in platformOverride) {
-        if (!platformOverride.hasOwnProperty(platformOverrideKey)) {
-            continue;
-        }
-
+    _.forOwn(platformOverride, function(val, platformOverrideKey) {
         if (isReservedProperty(platformOverrideKey)) {
-            continue;
+            return;
         }
 
-        msg[platformOverrideKey] = platformOverride[platformOverrideKey];
-    }
+        msg[platformOverrideKey] = val;
+    });
 
     var extra = notification.extra || {};
 
-    for (var extraKey in extra) {
-        if (!extra.hasOwnProperty(extraKey)) {
-            continue;
-        }
-
-        msg[platformDataKey][extraKey] = extra[extraKey];
-    }
+    _.forOwn(extra, function(val, extraKey) {
+        msg[platformDataKey][extraKey] = val;
+    });
 
     var platformExtra = platformOverride.extra || {};
 
-    for (var platformExtraKey in platformExtra) {
-        if (!platformExtra.hasOwnProperty(platformExtraKey)) {
-            continue;
-        }
+    var handleAPS = (dataPlatform == "ios" && platform !== dataPlatform);
 
-        msg[platformDataKey][platformExtraKey] = platformExtra[platformExtraKey];
+    msg[platformDataKey] = msg[platformDataKey] || {};
+
+    if (handleAPS) {
+        _.forOwn(platformExtra.aps, function(val, platformExtraKey) {
+            msg[platformDataKey][platformExtraKey] = val;
+        });
     }
+
+    _.forOwn(platformExtra, function(val, platformExtraKey) {
+        if (handleAPS && platformExtraKey === "aps") {
+            return;
+        }
+        msg[platformDataKey][platformExtraKey] = val;
+    });
 
     if (platform === "android") {
         fixAndroidNotificationParams(msg);

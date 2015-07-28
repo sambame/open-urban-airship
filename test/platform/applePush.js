@@ -53,7 +53,7 @@ describe("applePush", function() {
 
     it("buildMessage", function (done) {
         var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
-            message = buildMessage(notification, "ios", "payload", apn.Notification).toJSON();
+            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification).toJSON();
 
         should.not.exists(message["content-available"]);
 
@@ -90,7 +90,7 @@ describe("applePush", function() {
                 return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null)
                     .then(function(device) {
                         var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
-                            message = buildMessage(notification, "ios", "payload", apn.Notification);
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
 
                         applePush.push(application, device, message);
                         applePush.push(application, device, message);
@@ -135,7 +135,7 @@ describe("applePush", function() {
                 return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null, certificate)
                     .then(function(device) {
                         var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
-                            message = buildMessage(notification, "ios", "payload", apn.Notification);
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
 
                         applePush.push(application, device, message);
                         applePush.push(application, device, message);
@@ -173,7 +173,7 @@ describe("applePush", function() {
                 return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null, certificateNotFound)
                     .then(function(device) {
                         var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
-                            message = buildMessage(notification, "ios", "payload", apn.Notification);
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
 
                         applePush.push(application, device, message);
                         applePush.push(application, device, message);

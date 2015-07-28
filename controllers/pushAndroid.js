@@ -54,7 +54,8 @@ var checkIfSwitchedToken = function(results) {
 
 var pushAndroidNotificationUsingSender = function(gcmSender, application, device, notification, callback) {
     // create a message with default values
-    var message = buildMessage(notification, device.platform, "data", gcm.Message),
+    var platform = device.actual_platform || device.platform,
+        message = buildMessage(notification, device.platform, platform, "data", gcm.Message),
         registrationIds = [device.token];
 
     if (generalConfig.verboseDebug) {

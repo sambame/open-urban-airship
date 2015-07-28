@@ -32,7 +32,7 @@ process.on("SIGINT", function() {
     });
 });
 
-logger.info("mongodb connecting to" + mongoUri);
+logger.info("mongodb connecting to " + mongoUri);
 
 app.listen(port, function () {
     logger.info("Listening on " +  port);

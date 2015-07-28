@@ -2,8 +2,10 @@
 /*eslint-env node */
 "use strict";
 
-var device = require("./../controllers/device"),
-	Push = require("./../controllers/push"),
+var device = require("../controllers/device"),
+    logger = require("../logger"),
+    util = require("util"),
+    Push = require("../controllers/push"),
 	Device = require("../controllers/device");
 
 
@@ -33,9 +35,11 @@ var push = function (req, res) {
             });
         })
         .catch(function(err) {
+            logger.error(util.format("%s failed send push %s", req.user.app.name, err), err);
+
             return res.status(500).json({
-                "ok": false,
-                "message": err.message
+                ok: false,
+                message: err.message
             });
         });
 };
