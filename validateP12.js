@@ -25,6 +25,12 @@ function validateP12(certificates) {
                 var certificate = parsed.certificates[0],
                     validity = certificate.validity();
 
+                var attributes = certificate._cert.subject.attributes,
+                    attributeIndex = _.findIndex(attributes, function(attribute) {
+                        return attribute.type === "0.9.2342.19200300.100.1.1";
+                    });
+
+                certificateData.userId = attributeIndex > -1 ? attributes[attributeIndex].value : "not found";
                 certificateData.sandbox = !!certificate.environment().sandbox;
                 certificateData.production = !!certificate.environment().production;
                 certificateData.pushExpirationDate = validity.notAfter;

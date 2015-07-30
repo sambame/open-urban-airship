@@ -72,7 +72,7 @@ var createDevice = function (req, res) {
 
     var params = req.body;
 
-    Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags, params.iosCertificateName || params.ios_certificate_name)
+    Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags, params.iosCertificateName, params.sandbox)
         .then(function(device) {
             if (!device) {
                 res.json({

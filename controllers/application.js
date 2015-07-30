@@ -45,6 +45,7 @@ var configureIOS = function(application, certificates) {
             application.ios.passphrase = val.passphrase;
             application.ios.production = val.production;
             application.ios.sandbox = val.sandbox;
+            application.ios.userId = val.userId;
             application.ios.pushExpirationDate = val.pushExpirationDate;
         } else {
             var indexOfPrevCertificate = application.indexOfCertificate(name),
@@ -53,6 +54,7 @@ var configureIOS = function(application, certificates) {
             newCertificate.production = val.production;
             newCertificate.sandbox = val.sandbox;
             newCertificate.pushExpirationDate = val.pushExpirationDate;
+            newCertificate.userId = val.userId;
             newCertificate.pfxData = val.pfx;
             newCertificate.passphrase = val.passphrase;
             newCertificate.name = name;

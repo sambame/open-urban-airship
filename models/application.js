@@ -17,6 +17,7 @@ var ApplicationSchema = new Schema({
         pfxData: Buffer,
         passphrase: String,
         pushExpirationDate: Date,
+        userId: String,
         production: Boolean,
         sandbox: Boolean
     },

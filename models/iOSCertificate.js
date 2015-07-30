@@ -12,6 +12,7 @@ var iOSCertificateSchema = new Schema({
     passphrase: String,
     pushExpirationDate: Date,
     production: Boolean,
+    userId: String,
     sandbox: Boolean
 });
 

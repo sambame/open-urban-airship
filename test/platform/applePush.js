@@ -10,9 +10,24 @@ var sinceToDate = require("../../sinceToDate"),
     sinon = require("sinon"),
     mongoose = require("mongoose"),
     apn = require("apn"),
-    Q = require("q"),
     fs = require("fs"),
+    util = require("util"),
+    EventEmitter = require("events").EventEmitter,
     applePush = require("../../controllers/pushApple");
+
+var apnConnection = function() {
+    this.pushNotification = function() {};
+    EventEmitter.call(this);
+};
+
+util.inherits(apnConnection, EventEmitter);
+
+var apnFeedback = function() {
+
+    EventEmitter.call(this);
+};
+
+util.inherits(apnFeedback, EventEmitter);
 
 describe("applePush", function() {
     var applicationName = "applicationName",
@@ -44,6 +59,9 @@ describe("applePush", function() {
             that.sinon.verify();
             that.sinon.restore();
 
+            applePush.clearConnections();
+            applePush.clearFeedbacks();
+
             done();
         });
 
@@ -63,13 +81,22 @@ describe("applePush", function() {
     it("simplePush", function (done) {
         var that = this;
 
-        var connection = new apn.Connection(),
-            feedback = applePush.createFeedbackService(this.pfx, "apntest", false),
-            mockConnection = this.sinon.mock(connection),
-            mockApn = this.sinon.mock(apn);
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
+            mockConnection = this.sinon.mock(connection);
 
-        mockApn.expects("Connection").once().returns(connection);
-        mockApn.expects("Feedback").withArgs(sinon.match({gateway: "gateway.sandbox.push.apple.com", passphrase: "apntest"})).once().returns(feedback);
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(feedback);
 
         mockConnection.expects("pushNotification").twice().withArgs(sinon.match({
             _contentAvailable: true,
@@ -84,7 +111,168 @@ describe("applePush", function() {
             .then(function(application) {
                 var certificates = {};
 
-                certificates["default"] = {pfx: that.pfx, passphrase: "apntest"};
+                certificates["default"] = {pfx: that.pfx, passphrase: "apntest", production: false, sandbox: true};
+                Application.configureIOS(application, certificates);
+
+                return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null)
+                    .then(function(device) {
+                        var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
+
+                        applePush.push(application, device, message);
+                        applePush.push(application, device, message);
+                    });
+            })
+            .then(function() {
+                done();
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
+    it("simplePush (productionHint: false)", function (done) {
+        var that = this;
+
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
+            mockConnection = this.sinon.mock(connection);
+
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(feedback);
+
+        mockConnection.expects("pushNotification").twice().withArgs(sinon.match({
+            _contentAvailable: true,
+            encoding: "utf8",
+            expiry: 0,
+            payload: { param1: "param1 value", param2: "param2 value" },
+            priority: 10,
+            retryLimit: -1
+        }), sinon.match.any);
+
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                var certificates = {};
+
+                certificates["default"] = {pfx: that.pfx, passphrase: "apntest", production: true, sandbox: true};
+                Application.configureIOS(application, certificates);
+
+                var sandbox = true;
+                return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null, null, sandbox)
+                    .then(function(device) {
+                        var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
+
+                        applePush.push(application, device, message);
+                        applePush.push(application, device, message);
+                    });
+            })
+            .then(function() {
+                done();
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
+    it("simplePush (productionHint: true)", function (done) {
+        var that = this;
+
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
+            mockConnection = this.sinon.mock(connection);
+
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.push.apple.com",
+            passphrase: "apntest",
+            production: true
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.push.apple.com",
+            passphrase: "apntest",
+            production: true
+        })).once().returns(feedback);
+
+        mockConnection.expects("pushNotification").twice().withArgs(sinon.match({
+            _contentAvailable: true,
+            encoding: "utf8",
+            expiry: 0,
+            payload: { param1: "param1 value", param2: "param2 value" },
+            priority: 10,
+            retryLimit: -1
+        }), sinon.match.any);
+
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                var certificates = {};
+
+                certificates["default"] = {pfx: that.pfx, passphrase: "apntest", production: true, sandbox: true};
+                Application.configureIOS(application, certificates);
+
+                var sandbox = false;
+                return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null, null, sandbox)
+                    .then(function(device) {
+                        var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
+
+                        applePush.push(application, device, message);
+                        applePush.push(application, device, message);
+                    });
+            })
+            .then(function() {
+                done();
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
+    it("simplePush (prod)", function (done) {
+        var that = this;
+
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
+            mockConnection = this.sinon.mock(connection);
+
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.push.apple.com",
+            passphrase: "apntest",
+            production: true
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.push.apple.com",
+            passphrase: "apntest",
+            production: true
+        })).once().returns(feedback);
+
+        mockConnection.expects("pushNotification").twice().withArgs(sinon.match({
+            _contentAvailable: true,
+            encoding: "utf8",
+            expiry: 0,
+            payload: { param1: "param1 value", param2: "param2 value" },
+            priority: 10,
+            retryLimit: -1
+        }), sinon.match.any);
+
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                var certificates = {};
+
+                certificates["default"] = {pfx: that.pfx, passphrase: "apntest", production: true, sandbox: false};
                 Application.configureIOS(application, certificates);
 
                 return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null)
@@ -107,14 +295,23 @@ describe("applePush", function() {
     it("simplePush (multi)", function (done) {
         var that = this;
 
-        var connection = new apn.Connection(),
-            feedback = applePush.createFeedbackService(this.pfx, "apntest", false),
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
             mockConnection = this.sinon.mock(connection),
-            mockApn = this.sinon.mock(apn),
             certificate = "not default";
 
-        mockApn.expects("Connection").once().returns(connection);
-        mockApn.expects("Feedback").withArgs(sinon.match({gateway: "gateway.sandbox.push.apple.com", passphrase: "apntest"})).once().returns(feedback);
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(feedback);
 
         mockConnection.expects("pushNotification").twice().withArgs(sinon.match({
             _contentAvailable: true,
@@ -129,7 +326,7 @@ describe("applePush", function() {
             .then(function(application) {
                 var certificates = {};
 
-                certificates[certificate] = {pfx: that.pfx, passphrase: "apntest"};
+                certificates[certificate] = {pfx: that.pfx, passphrase: "apntest", production: false, sandbox: true};
                 Application.configureIOS(application, certificates);
 
                 return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null, certificate)
@@ -187,4 +384,113 @@ describe("applePush", function() {
             });
     });
 
+    it("feedback", function(done) {
+        var that = this;
+
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
+            mockConnection = this.sinon.mock(connection);
+
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.sandbox.push.apple.com",
+            passphrase: "apntest",
+            production: false
+        })).once().returns(feedback);
+
+        mockConnection.expects("pushNotification").once().withArgs(sinon.match({
+            _contentAvailable: true,
+            encoding: "utf8",
+            expiry: 0,
+            payload: { param1: "param1 value", param2: "param2 value" },
+            priority: 10,
+            retryLimit: -1
+        }), sinon.match.any);
+
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                var certificates = {};
+
+                certificates["default"] = {pfx: that.pfx, passphrase: "apntest", production: false, sandbox: true};
+                Application.configureIOS(application, certificates);
+
+                return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null)
+                    .then(function(device) {
+                        var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
+
+                        applePush.push(application, device, message);
+                    });
+            })
+            .then(function() {
+                feedback.emit("feedback", null, null);
+            })
+            .then(function() {
+                done();
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
+
+    it("feedback (prod)", function(done) {
+        var that = this;
+
+        var mockApn = this.sinon.mock(apn),
+            feedback = new apnFeedback(),
+            connection = new apnConnection(),
+            mockConnection = this.sinon.mock(connection);
+
+        mockApn.expects("Connection").withArgs(sinon.match({
+            gateway: "gateway.push.apple.com",
+            passphrase: "apntest",
+            production: true
+        })).once().returns(connection);
+
+        mockApn.expects("Feedback").withArgs(sinon.match({
+            gateway: "gateway.push.apple.com",
+            passphrase: "apntest",
+            production: true
+        })).once().returns(feedback);
+
+        mockConnection.expects("pushNotification").once().withArgs(sinon.match({
+            _contentAvailable: true,
+            encoding: "utf8",
+            expiry: 0,
+            payload: { param1: "param1 value", param2: "param2 value" },
+            priority: 10,
+            retryLimit: -1
+        }), sinon.match.any);
+
+        Application.create(applicationName, applicationKey, applicationMasterSecret, applicationSecret)
+            .then(function(application) {
+                var certificates = {};
+
+                certificates["default"] = {pfx: that.pfx, passphrase: "apntest", production: true, sandbox: false};
+                Application.configureIOS(application, certificates);
+
+                return Device.createOrUpdate(application, null, iosPlatform, deviceToken, deviceAlias, null)
+                    .then(function(device) {
+                        var notification = {"ios":{"content-available": 1,"extra":{"param1": "param1 value","param2":"param2 value"}}},
+                            message = buildMessage(notification, "ios", "ios", "payload", apn.Notification);
+
+                        applePush.push(application, device, message);
+                    });
+            })
+            .then(function() {
+                feedback.emit("feedback", []);
+            })
+            .then(function() {
+                done();
+            })
+            .catch(function(err) {
+                done(err);
+            });
+    });
 });

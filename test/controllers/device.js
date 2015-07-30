@@ -73,8 +73,8 @@ describe("device", function() {
                     return Device.createOrUpdate(application, null, devicePlatform, deviceToken, deviceAlias, null, certificate1);
                 })
                 .then(function(device) {
-                    should.exists(device.ios_certificate_name);
-                    device.ios_certificate_name.should.equal(certificate1);
+                    should.exists(device.ios.ios_certificate_name);
+                    device.ios.ios_certificate_name.should.equal(certificate1);
                 })
                 .then(done)
                 .catch(function(err) {

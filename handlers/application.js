@@ -35,6 +35,10 @@ var addiOSCertificatesParams = function(application, params) {
             defaultCertificate.pushExpirationDate = application.ios.pushExpirationDate.toISOString();
         }
 
+        if (application.ios.userId) {
+            defaultCertificate.userId = application.ios.userId;
+        }
+
         var currentCertificates = {};
 
         if (_.keys(defaultCertificate).length > 0) {
@@ -44,7 +48,8 @@ var addiOSCertificatesParams = function(application, params) {
         _.forEach(application.ios_certificates, function(certificate) {
             currentCertificates[certificate.name] = {
                 production: !!certificate.production,
-                sandbox: !!certificate.sandbox
+                sandbox: !!certificate.sandbox,
+                userId: certificate.userId
             };
 
             if (certificate.pushExpirationDate) {
@@ -64,7 +69,7 @@ var requestToIOSCertificates = function(req) {
 
     if (params.ios_certificate) {
         var passphrase = params.ios_certificate_password,
-            name = (params.ios_certificate_name || "default").toLowerCase();
+            name = (params.iosCertificateName || "default").toLowerCase();
 
         iosCertificates[name] = {
             pfx: new Buffer(params.ios_certificate, "base64"),

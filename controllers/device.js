@@ -3,6 +3,7 @@
 "use strict";
 var DeviceModel = require("../models/device"),
     uuid = require("node-uuid"),
+    _ = require("lodash"),
 	logger = require("../logger");
 
 /**
@@ -14,8 +15,9 @@ var DeviceModel = require("../models/device"),
  * @param {string} [alias]
  * @param {Array} [tags]
  * @param {String} [iosCertificateName]
+ * @param {Boolean} [sandbox]
  */
-var createOrUpdateDevice = function(application, apid, platform, token, alias, tags, iosCertificateName) {
+var createOrUpdateDevice = function(application, apid, platform, token, alias, tags, iosCertificateName, sandbox) {
 	if (DeviceModel.isCaseInsensitiveToken(token)) {
         token = token.toUpperCase();
     }
@@ -62,8 +64,8 @@ var createOrUpdateDevice = function(application, apid, platform, token, alias, t
     updateParams.$set.active = true;
     updateParams.updated_at = currentTime;
 
-    if (iosCertificateName) {
-        updateParams.ios_certificate_name = iosCertificateName;
+    if (_.isUndefined(iosCertificateName) === false || _.isUndefined(sandbox) === false) {
+        updateParams.$set.ios = {ios_certificate_name: iosCertificateName, sandbox: sandbox};
     }
 
     if (alias) {

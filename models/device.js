@@ -24,7 +24,10 @@ var iosTokenLength = 64,
         "created_at": {type: Date},
         "updated_at": {type: Date},
         old_key: {type: String},
-        "ios_certificate_name": {type: String}
+        ios: {
+            "ios_certificate_name": {type: String},
+            "sandbox": {type: Boolean}
+        }
     });
 
 DeviceSchema.pre("save", function(next){
