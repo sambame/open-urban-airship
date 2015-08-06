@@ -151,7 +151,12 @@ function buildMessage(notification, dataPlatform, platform, platformDataKey, pla
         return propertyName in properties;
     }
 
-    var msg = new platformNotificationClass();
+    var msgInstances = new platformNotificationClass(),
+        msg = msgInstances;
+
+    if (platform === "android") {
+        msg = msgInstances.params;
+    }
 
     _.forOwn(notification, function(val, key) {
         if (isReservedProperty(key)) {
@@ -202,7 +207,7 @@ function buildMessage(notification, dataPlatform, platform, platformDataKey, pla
         fixiOSNotificationParams(msg);
     }
 
-    return msg;
+    return msgInstances;
 }
 
 module.exports = buildMessage;
