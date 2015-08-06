@@ -176,7 +176,7 @@ function wireService(application, name, service, producation) {
     }
 
     service.on('transmissionError', function (errCode, notification, device) {
-        logger.error(util.format("%s notification caused error: %s for device %s %s", application.name, errCode, device, JSON.stringify(notification)));
+        logger.error(util.format("%s notification caused error: %s for device %s %s", application.name, errCode, String(device).toUpperCase(), JSON.stringify(notification)));
         if (errCode === 8) {
             logger.error("A error code of 8 indicates that the device token is invalid. This could be for a number of reasons - are you using the correct environment? i.e. Production vs. Sandbox");
         }
