@@ -102,7 +102,7 @@ var getByAudience = function (application, audience) {
 	var conditions = [];
 
 	if (audience.alias) {
-		conditions.push({alias: audience.alias});
+		conditions.push({_application: application._id, alias: audience.alias});
 	}
 
 	if (audience.device_token) {
@@ -110,25 +110,18 @@ var getByAudience = function (application, audience) {
             audience.device_token = audience.device_token.toUpperCase();
         }
 
-		conditions.push({token: audience.device_token});
+		conditions.push({_application: application._id, token: audience.device_token});
 	}
 
 	if (audience.apid) {
-		conditions.push({_id: audience.apid});
+		conditions.push({_application: application._id, _id: audience.apid});
 	}
 
     if (audience.tags) {
-        conditions.push({tags: audience.tags});
+        conditions.push({_application: application._id, tags: audience.tags});
     }
 
-    var condition = {
-        $and: [
-            {$or: conditions},
-            {_application: application._id}
-        ]
-    };
-
-    return DeviceModel.findQ(condition);
+    return DeviceModel.findQ({$or: conditions});
 };
 
 module.exports = {

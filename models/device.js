@@ -45,6 +45,7 @@ DeviceSchema.pre("save", function(next){
 
 DeviceSchema.index({_application: 1, token: 1}, {unique: true});
 DeviceSchema.index({_application: 1, alias: 1}, {unique: false});
+DeviceSchema.index({_application: 1, tags: 1}, {unique: false})
 
 function deactivateByConditions(application, conditions, time) {
     conditions._application = application._id;
