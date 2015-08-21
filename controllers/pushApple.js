@@ -171,37 +171,37 @@ function wireService(application, name, service, producation) {
 
     if (!certificate.production) {
         service.on('transmitted', function (notification, device) {
-            logger.info(util.format("%s notification transmitted to: %s", application.name, device.token.toString('hex')));
+            logger.info(util.format("%s(%s) notification transmitted to: %s", application.name, certificate, device.token.toString('hex')));
         });
     }
 
     service.on('transmissionError', function (errCode, notification, device) {
-        logger.error(util.format("%s notification caused error: %s for device %s %s", application.name, errCode, String(device).toUpperCase(), JSON.stringify(notification)));
+        logger.error(util.format("%s(%s) notification caused error: %s for device %s %s", application.name, certificate, errCode, String(device).toUpperCase(), JSON.stringify(notification)));
         if (errCode === 8) {
             logger.error("A error code of 8 indicates that the device token is invalid. This could be for a number of reasons - are you using the correct environment? i.e. Production vs. Sandbox");
         }
 
         if (errCode == 10) {
-            logger.warn(util.format("%s got shutdown from APN", application.name));
+            logger.warn(util.format("%s(%s) got shutdown from APN", application.name, certificate));
             delete feedbacks[createApplicationNameLookupKey(application, name, producation)];
             delete connections[createApplicationNameLookupKey(application, name, producation)];
         }
     });
 
     service.on('timeout', function () {
-        logger.warn(util.format("%s connection Timeout", application.name));
+        logger.warn(util.format("%s(%s) connection Timeout", application.name, certificate));
     });
 
     service.on('disconnected', function () {
-        logger.warn(util.format("%s disconnected from APNS", application.name));
+        logger.warn(util.format("%s(%s) disconnected from APNS", application.name, certificate));
     });
 
     service.on('socketError',  function (err) {
-        logger.warn(util.format("%s socket error %s", application.name, err), err);
+        logger.warn(util.format("%s(%s) socket error %s", application.name, certificate, err), err);
     });
 
     service.on('error',  function (err) {
-        logger.error(util.format("%s error %s", application.name, err), err);
+        logger.error(util.format("%s(%s) error %s", application.name, certificate, err), err);
     });
 
     return service;
