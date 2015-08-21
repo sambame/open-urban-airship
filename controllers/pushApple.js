@@ -166,42 +166,43 @@ function createFeedbackIfNeeded(application, name, production) {
     });
 }
 
-function wireService(application, name, service, producation) {
-    var certificate = getCertificateNamed(application, name, producation);
+function wireService(application, name, service, production) {
+    var certificate = getCertificateNamed(application, name, production),
+        certificateKey = createApplicationNameLookupKey(application, name, isProductionCertificate(certificate, production));
 
     if (!certificate.production) {
         service.on('transmitted', function (notification, device) {
-            logger.info(util.format("%s(%s) notification transmitted to: %s", application.name, certificate, device.token.toString('hex')));
+            logger.info(util.format("%s(%s) notification transmitted to: %s", application.name, certificateKey, device.token.toString('hex')));
         });
     }
 
     service.on('transmissionError', function (errCode, notification, device) {
-        logger.error(util.format("%s(%s) notification caused error: %s for device %s %s", application.name, certificate, errCode, String(device).toUpperCase(), JSON.stringify(notification)));
+        logger.error(util.format("%s(%s) notification caused error: %s for device %s %s", application.name, certificateKey, errCode, String(device).toUpperCase(), JSON.stringify(notification)));
         if (errCode === 8) {
             logger.error("A error code of 8 indicates that the device token is invalid. This could be for a number of reasons - are you using the correct environment? i.e. Production vs. Sandbox");
         }
 
         if (errCode == 10) {
-            logger.warn(util.format("%s(%s) got shutdown from APN", application.name, certificate));
-            delete feedbacks[createApplicationNameLookupKey(application, name, producation)];
-            delete connections[createApplicationNameLookupKey(application, name, producation)];
+            logger.warn(util.format("%s(%s) got shutdown from APN", application.name, certificateKey));
+            delete feedbacks[certificateKey];
+            delete connections[certificateKey];
         }
     });
 
     service.on('timeout', function () {
-        logger.warn(util.format("%s(%s) connection Timeout", application.name, certificate));
+        logger.warn(util.format("%s(%s) connection Timeout", application.name, certificateKey));
     });
 
     service.on('disconnected', function () {
-        logger.warn(util.format("%s(%s) disconnected from APNS", application.name, certificate));
+        logger.warn(util.format("%s(%s) disconnected from APNS", application.name, certificateKey));
     });
 
     service.on('socketError',  function (err) {
-        logger.warn(util.format("%s(%s) socket error %s", application.name, certificate, err), err);
+        logger.warn(util.format("%s(%s) socket error %s", application.name, certificateKey, err), err);
     });
 
     service.on('error',  function (err) {
-        logger.error(util.format("%s(%s) error %s", application.name, certificate, err), err);
+        logger.error(util.format("%s(%s) error %s", application.name, certificateKey, err), err);
     });
 
     return service;
