@@ -12,7 +12,7 @@ run apt-get -y update && \
     easy_install supervisor==3.1.3 && \
     echo_supervisord_conf > /etc/supervisord.conf && \
     printf "[include]\nfiles = /var/www/openurban/Supervisorfile.ini\n" >> /etc/supervisord.conf && \
-    mkdir /nodejs && curl http://nodejs.org/dist/v0.10.36/node-v0.10.36-linux-x64.tar.gz | tar xvzf - -C /nodejs --strip-components=1 && \
+    mkdir /nodejs && curl http://nodejs.org/dist/v4.2.2/node-v4.2.2-linux-x64.tar.gz | tar xvzf - -C /nodejs --strip-components=1 && \
     mkdir -p /var/www/openurban && \
     cd /var/www/openurban && \
     npm install --production --no-color --loglevel info && \
