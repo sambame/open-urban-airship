@@ -66,10 +66,6 @@ var createDevice = function (req, res) {
         }
     }
 
-    if (deviceToken && platform === "ios") {
-        deviceToken = deviceToken.toLowerCase();
-    }
-
     var params = req.body;
 
     Device.createOrUpdate(req.user.app, apid, platform, deviceToken, params.alias, params.tags, params.iosCertificateName, params.sandbox)
