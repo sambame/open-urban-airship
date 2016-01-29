@@ -5,7 +5,7 @@
 [![Docker Repository on Quay.io](https://quay.io/repository/sambame/open-urban/status "Docker Repository on Quay.io")](https://quay.io/repository/sambame/open-urban)
 
 This is an open implmenation of the Urban [Airship REST API](https://docs.urbanairship.com/display/DOCS/Server%3A+iOS+Push+API) for pushing notifications to iOS devices.
-The project runs under node.js and keep be run only any platform that can host node.js.  
+The project runs under node.js and can be run on any platform that can host node.js.  
 
 Any Urban client can work with this code as long and you change the endpoint to point to where your server code is running instead of the Urban endpoint (https://go.urbanairship.com/).
 
